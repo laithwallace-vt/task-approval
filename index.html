@@ -8,21 +8,28 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --purple: #7C5CFC;
-    --purple-light: #EDE9FF;
-    --purple-dim: rgba(124, 92, 252, 0.12);
-    --red: #E5403A;
-    --red-light: #FFF0F0;
-    --green: #16A34A;
-    --green-light: #F0FDF4;
-    --text-primary: rgba(15,15,20,1);
-    --text-secondary: rgba(15,15,20,0.6);
-    --text-tertiary: rgba(15,15,20,0.4);
-    --border: rgba(15,15,20,0.1);
-    --border-focus: rgba(124,92,252,0.5);
+    --purple: #6000f0;
+    --purple-light: #f0e5ff;
+    --purple-dim: rgba(96, 0, 240, 0.08);
+    --red: #dc2828;
+    --red-light: #fef1f2;
+    --green: #16a249;
+    --green-light: #e8fcef;
+    --amber: #f97415;
+    --amber-light: #fff2eb;
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --text-primary: rgba(15,23,41,1);
+    --text-secondary: rgba(15,23,41,0.7);
+    --text-tertiary: rgba(15,23,41,0.5);
+    --text-quaternary: rgba(15,23,41,0.35);
+    --border: rgba(15,23,41,0.08);
+    --border-strong: rgba(15,23,41,0.12);
+    --border-focus: rgba(96,0,240,0.4);
     --surface: #ffffff;
-    --surface-hover: rgba(15,15,20,0.04);
-    --surface-subtle: #F8F8FA;
+    --surface-hover: rgba(15,23,41,0.04);
+    --surface-subtle: #fafbfc;
+    --canvas: #eceef1;
     --radius-sm: 4px;
     --radius-md: 6px;
     --radius-lg: 8px;
@@ -30,10 +37,15 @@
     --font: 'DM Sans', system-ui, -apple-system, sans-serif;
   }
 
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
   body {
     font-family: var(--font);
     background: #EEEEF2;
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
   }
@@ -84,42 +96,48 @@
   .viewport-wrap {
     flex: 1;
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     justify-content: center;
-    padding: 32px 16px;
+    padding: 0;
+    overflow: hidden;
   }
   .viewport {
     width: 100%;
-    max-width: 1440px;
+    max-width: 100%;
+    height: 100%;
     transition: max-width 0.3s cubic-bezier(0.4,0,0.2,1);
     background: #EEEEF2;
-    border-radius: 10px;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
   }
-  .viewport.bp-900 { max-width: 900px; }
-  .viewport.bp-600 { max-width: 600px; }
-  .viewport.bp-375 { max-width: 375px; }
+  .viewport.bp-900 { max-width: 900px; margin: 0 auto; }
+  .viewport.bp-600 { max-width: 600px; margin: 0 auto; }
+  .viewport.bp-375 { max-width: 375px; margin: 0 auto; }
 
   /* ── Modal scaffold ── */
   .modal-wrap {
-    padding: 32px;
+    padding: 0;
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
     justify-content: center;
-    min-height: 600px;
+    flex: 1;
+    height: 100%;
   }
 
   .modal {
     background: var(--surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-modal);
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
     width: 100%;
-    max-width: 960px;
+    max-width: none;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    height: 100%;
   }
 
   /* ── Header (Slot 1) ── */
@@ -185,13 +203,13 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #a78bfa, #7C5CFC);
+    background: var(--purple);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 9px;
     color: white;
-    font-weight: 600;
+    font-weight: 500;
     flex-shrink: 0;
   }
   .icon-btn {
@@ -351,8 +369,36 @@
   /* ── Form body (centre) ── */
   .form-pane {
     overflow-y: auto;
-    padding: 20px 24px;
+    padding: 32px 24px;
     border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--surface-subtle);
+  }
+  .form-content-wrapper {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    flex-shrink: 0;
+  }
+  .form-body-content {
+    flex: 1;
+  }
+  .form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 32px;
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    gap: 12px;
   }
   .section-accordion {
     border: 1px solid var(--border);
@@ -377,7 +423,7 @@
   .section-accordion-body { padding: 16px; border-top: 1px solid var(--border); }
 
   .form-section-title {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
     margin-bottom: 4px;
@@ -414,7 +460,7 @@
   }
   .form-input:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(124,92,252,0.1);
+    box-shadow: 0 0 0 3px rgba(96,0,240,0.1);
   }
   .form-input.with-icon { padding-left: 28px; }
   .input-wrap { position: relative; }
@@ -442,7 +488,7 @@
   }
   .form-textarea:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(124,92,252,0.1);
+    box-shadow: 0 0 0 3px rgba(96,0,240,0.1);
   }
   .radio-group { display: flex; flex-direction: column; gap: 8px; }
   .radio-item {
@@ -565,15 +611,9 @@
   .line-item-type { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
   .line-item-amount { font-size: 13px; font-weight: 500; color: var(--text-primary); }
 
-  /* ── Footer (Slot 4) ── */
+  /* ── Footer - REMOVED TO INLINE ── */
   .modal-footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    gap: 8px;
-    flex-shrink: 0;
+    display: none;
   }
   .btn {
     height: 32px;
@@ -604,12 +644,12 @@
     background: var(--purple);
     color: white;
   }
-  .btn-primary:hover { background: #6a4de0; }
+  .btn-primary:hover { background: #5200d0; }
   .btn-next {
     background: var(--purple);
     color: white;
   }
-  .btn-next:hover { background: #6a4de0; }
+  .btn-next:hover { background: #5200d0; }
 
   /* ── Bottom sheet (mobile) ── */
   .bottom-sheet-overlay {
@@ -892,12 +932,18 @@
     375px
   </button>
   <div class="bp-divider"></div>
+  <span class="bp-label">Archetype</span>
+  <button class="bp-btn active" onclick="switchArchetype('intake', this)">Intake Form</button>
+  <button class="bp-btn" onclick="switchArchetype('manager', this)">Manager Approval</button>
+  <button class="bp-btn" onclick="switchArchetype('comparison', this)">Offer Comparison</button>
+  <button class="bp-btn" onclick="switchArchetype('multi', this)">Multi-Stage</button>
+  <div class="bp-divider"></div>
   <span class="bp-label" style="margin-right:0; color:rgba(255,255,255,0.6)">Step</span>
-  <button class="bp-btn" onclick="goToStep(0)">1</button>
-  <button class="bp-btn" onclick="goToStep(1)">2</button>
-  <button class="bp-btn" onclick="goToStep(2)">3</button>
-  <button class="bp-btn" onclick="goToStep(3)">4</button>
-  <button class="bp-btn" onclick="goToStep(4)">5</button>
+  <button class="bp-btn" id="step-btn-1" onclick="goToStep(0)">1</button>
+  <button class="bp-btn" id="step-btn-2" onclick="goToStep(1)">2</button>
+  <button class="bp-btn" id="step-btn-3" onclick="goToStep(2)">3</button>
+  <button class="bp-btn" id="step-btn-4" onclick="goToStep(3)">4</button>
+  <button class="bp-btn" id="step-btn-5" onclick="goToStep(4)">5</button>
 </div>
 
 <div class="viewport-wrap">
@@ -1019,35 +1065,108 @@
 </div>
 
 <script>
-const STEPS = [
-  { id: 0, name: 'Renewal reason',    pageTitle: 'Renewal reason'    },
-  { id: 1, name: 'Contract details',  pageTitle: 'Contract details'  },
-  { id: 2, name: 'Select products',   pageTitle: 'Select products'   },
-  { id: 3, name: 'Additional info',   pageTitle: 'Additional information' },
-  { id: 4, name: 'Upload documents',  pageTitle: 'Upload documents'  },
-];
+const ARCHETYPES = {
+  intake: {
+    steps: [
+      { id: 0, name: 'Renewal reason',    pageTitle: 'Renewal reason'    },
+      { id: 1, name: 'Contract details',  pageTitle: 'Contract details'  },
+      { id: 2, name: 'Select products',   pageTitle: 'Select products'   },
+      { id: 3, name: 'Additional info',   pageTitle: 'Additional information' },
+      { id: 4, name: 'Upload documents',  pageTitle: 'Upload documents'  },
+    ]
+  },
+  manager: {
+    steps: [
+      { id: 0, name: 'Approval summary', pageTitle: 'Approval summary' }
+    ]
+  },
+  comparison: {
+    steps: [
+      { id: 0, name: 'Review offers', pageTitle: 'Review offers' },
+      { id: 1, name: 'Confirm decision', pageTitle: 'Confirm decision' }
+    ]
+  },
+  multi: {
+    steps: [
+      { id: 0, name: 'Manager Review', pageTitle: 'Manager Review' },
+      { id: 1, name: 'Finance Review', pageTitle: 'Finance Review' },
+      { id: 2, name: 'Legal Review', pageTitle: 'Legal Review' },
+      { id: 3, name: 'CPO Review', pageTitle: 'CPO Review' }
+    ]
+  }
+};
 
+let currentArchetype = 'intake';
 let currentStep = 0;
 let activePanel = 'details';
+
+function getSteps() {
+  return ARCHETYPES[currentArchetype].steps;
+}
+
+// ── Archetype toggle ──
+function switchArchetype(type, btn) {
+  currentArchetype = type;
+  currentStep = 0;
+  
+  // Update buttons
+  document.querySelectorAll('.bp-bar .bp-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('switchArchetype')) {
+      b.classList.remove('active');
+    }
+  });
+  if (btn) btn.classList.add('active');
+
+  // Update step buttons visibility
+  const steps = getSteps();
+  for (let i = 1; i <= 5; i++) {
+    const sbtn = document.getElementById('step-btn-' + i);
+    if (sbtn) {
+      sbtn.style.display = i <= steps.length ? 'flex' : 'none';
+      sbtn.classList.toggle('active', i === 1);
+    }
+  }
+
+  render();
+}
 
 // ── Breakpoint toggle ──
 function setBreakpoint(bp, btn) {
   const vp = document.getElementById('viewport');
   vp.className = 'viewport' + (bp === 'full' ? '' : ' ' + bp);
-  document.querySelectorAll('.bp-bar .bp-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.bp-bar .bp-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('setBreakpoint')) {
+      b.classList.remove('active');
+    }
+  });
   btn.classList.add('active');
 }
 
 // ── Step navigation ──
 function goToStep(n) {
-  currentStep = n;
-  render();
+  const steps = getSteps();
+  if (n >= 0 && n < steps.length) {
+    currentStep = n;
+    // Update active step button
+    for (let i = 1; i <= 5; i++) {
+      const sbtn = document.getElementById('step-btn-' + i);
+      if (sbtn) sbtn.classList.toggle('active', i === n + 1);
+    }
+    render();
+  }
 }
 function nextStep() {
-  if (currentStep < STEPS.length - 1) { currentStep++; render(); }
+  const steps = getSteps();
+  if (currentStep < steps.length - 1) { 
+    currentStep++; 
+    goToStep(currentStep);
+  }
 }
 function prevStep() {
-  if (currentStep > 0) { currentStep--; render(); }
+  if (currentStep > 0) { 
+    currentStep--; 
+    goToStep(currentStep);
+  }
 }
 
 // ── Bottom sheet ──
@@ -1087,16 +1206,40 @@ function switchPanelTab(tab, el) {
 
 // ── Render ──
 function render() {
+  const modal = document.getElementById('modal');
+  const steps = getSteps();
+  
+  // Header title update
+  const titleEl = document.querySelector('.task-title');
+  if (currentArchetype === 'manager') titleEl.textContent = 'Manager Approval';
+  else if (currentArchetype === 'comparison') titleEl.textContent = 'Offer Comparison';
+  else if (currentArchetype === 'multi') titleEl.textContent = 'Sequential Approval';
+  else titleEl.textContent = 'Intake Form';
+
+  // Toggle layout classes
+  modal.className = modal.className.split(' ').filter(c => !c.startsWith('archetype-')).join(' ');
+  modal.classList.add('archetype-' + currentArchetype);
+
   renderSidebar();
   renderStepStrip();
   renderForm();
   renderPanel();
-  renderFooter();
 }
 
 function renderSidebar() {
   const el = document.getElementById('sidebarNav');
-  el.innerHTML = STEPS.map((s, i) => {
+  const steps = getSteps();
+  
+  if (currentArchetype === 'manager') {
+    el.closest('.modal-body').style.gridTemplateColumns = '1fr 280px';
+    el.style.display = 'none';
+    return;
+  } else {
+    el.closest('.modal-body').style.gridTemplateColumns = '200px 1fr 280px';
+    el.style.display = '';
+  }
+
+  el.innerHTML = steps.map((s, i) => {
     const cls = i === currentStep ? 'active' : i < currentStep ? 'done' : '';
     return `<div class="sidebar-nav-item ${cls}" onclick="goToStep(${i})">
       <span class="step-indicator"></span>
@@ -1107,7 +1250,8 @@ function renderSidebar() {
 
 function renderSheetSteps() {
   const el = document.getElementById('sheetSteps');
-  el.innerHTML = STEPS.map((s, i) => {
+  const steps = getSteps();
+  el.innerHTML = steps.map((s, i) => {
     const cls = i === currentStep ? 'active' : i < currentStep ? 'done' : '';
     const icon = i < currentStep
       ? `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>`
@@ -1120,67 +1264,184 @@ function renderSheetSteps() {
 }
 
 function renderStepStrip() {
-  const s = STEPS[currentStep];
+  const steps = getSteps();
+  const s = steps[currentStep];
+  const strip = document.getElementById('stepStrip');
+  
+  if (currentArchetype === 'manager') {
+    strip.style.display = 'none';
+    return;
+  }
+  
+  // Responsive rules might override display: none, so we force flex if not manager
+  if (window.innerWidth <= 900) strip.style.display = 'flex';
+  
   document.getElementById('stepStripLabel').textContent = s.pageTitle;
-  document.getElementById('stepStripCount').textContent = `${currentStep + 1} of ${STEPS.length}`;
-  document.getElementById('stepProgressFill').style.width = `${((currentStep + 1) / STEPS.length) * 100}%`;
+  document.getElementById('stepStripCount').textContent = `${currentStep + 1} of ${steps.length}`;
+  document.getElementById('stepProgressFill').style.width = `${((currentStep + 1) / steps.length) * 100}%`;
   const backBtn = document.getElementById('backBtn');
   backBtn.style.visibility = currentStep === 0 ? 'hidden' : 'visible';
 }
 
 function renderForm() {
   const el = document.getElementById('formPane');
-  const s = STEPS[currentStep];
+  const steps = getSteps();
+  const s = steps[currentStep];
+  let contentHTML = '';
 
-  const forms = {
-    0: `
-      <div class="section-accordion">
-        <div class="section-accordion-header" onclick="toggleAccordion(this)">
-          Contacts
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+  if (currentArchetype === 'manager') {
+    contentHTML = `
+      <div style="background:var(--surface-subtle); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; margin-bottom:20px;">
+        <div class="form-section-title" style="font-size:14px; margin-bottom:12px;">Request Summary</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+          <div>
+            <div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; margin-bottom:4px;">Requester</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="meta-avatar" style="width:24px; height:24px; font-size:10px;">SR</div>
+              <span style="font-size:14px; color:var(--text-primary);">Sarah Ridley</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; margin-bottom:4px;">Amount</div>
+            <div style="font-size:18px; font-weight:600; color:var(--text-primary);">£12,400.00</div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; margin-bottom:4px;">Category</div>
+            <div style="font-size:14px; color:var(--text-primary);">Software & SaaS</div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; margin-bottom:4px;">Urgency</div>
+            <span style="font-size:11px; background:var(--amber-light); color:var(--amber); padding:2px 8px; border-radius:10px; font-weight:500;">Medium Priority</span>
+          </div>
+        </div>
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+          <div style="font-size:11px; color:var(--text-tertiary); text-transform:uppercase; margin-bottom:4px;">Description</div>
+          <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">Annual renewal for Adobe Creative Cloud (15 licenses) for the design team. Includes Photoshop, Illustrator, and Figma integration.</div>
         </div>
       </div>
-      <div class="section-accordion">
-        <div class="section-accordion-header" onclick="toggleAccordion(this)">
-          Request details
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-        <div class="section-accordion-body">
-          <div class="form-section-title">Renewal reason</div>
-          <div class="form-section-sub">Section 1 <span style="color:var(--text-tertiary)">· Section description</span></div>
 
-          <div class="form-group">
+      <div style="border:1px solid var(--green); background:var(--green-light); border-radius:var(--radius-lg); padding:16px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--green);">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 13L5 5L11 2L8 10L2 13Z" stroke="currentColor" stroke-width="1.5"/></svg>
+            Budget Impact
+          </div>
+          <span style="font-size:12px; font-weight:600; color:var(--green);">72% Used</span>
+        </div>
+        <div style="height:6px; background:rgba(22,162,73,0.15); border-radius:3px; overflow:hidden; margin-bottom:8px;">
+          <div style="width:72%; height:100%; background:var(--green); border-radius:3px;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary);">
+          <span>Remaining: £4,600.00</span>
+          <span style="color:var(--text-tertiary);">Total: £25,000.00</span>
+        </div>
+      </div>
+    `;
+  } else if (currentArchetype === 'comparison') {
+    if (currentStep === 0) {
+      contentHTML = `
+        <div style="margin-bottom:24px;">
+           <div class="form-section-title" style="font-size:14px; margin-bottom:16px;">Vendor Comparison</div>
+           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+              <div style="border:2px solid var(--purple); background:var(--purple-dim); border-radius:var(--radius-lg); padding:16px; position:relative;">
+                 <div style="position:absolute; top:-10px; left:16px; background:var(--purple); color:white; font-size:10px; font-weight:600; padding:2px 8px; border-radius:10px; display:flex; align-items:center; gap:4px;">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5L11 5.5L8.5 8L9 11.5L6 9.5L3 11.5L3.5 8L1 5.5L4.5 4.5L6 1Z" fill="currentColor"/></svg>
+                    AI RECOMMENDED
+                 </div>
+                 <div style="font-size:16px; font-weight:600; margin-bottom:4px;">Salesforce</div>
+                 <div style="font-size:20px; font-weight:700; color:var(--purple); margin-bottom:12px;">£142,000.00</div>
+                 <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">• Better integration coverage</div>
+                 <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">• Priority support included</div>
+                 <button class="btn btn-primary" style="width:100%; height:32px;">Select Salesforce</button>
+              </div>
+              <div style="border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px;">
+                 <div style="font-size:16px; font-weight:600; margin-bottom:4px;">HubSpot</div>
+                 <div style="font-size:20px; font-weight:700; color:var(--text-primary); margin-bottom:12px;">£118,500.00</div>
+                 <div style="font-size:12px; color:var(--text-secondary); margin-bottom:8px;">• Lower upfront cost</div>
+                 <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;">• Limited customization</div>
+                 <button class="btn btn-ghost" style="width:100%; height:32px; border:1px solid var(--border);">Select HubSpot</button>
+              </div>
+           </div>
+        </div>
+        <div>
+           <div class="form-section-title" style="font-size:14px; margin-bottom:16px;">Comparison Matrix</div>
+           <table style="width:100%; border-collapse:collapse; font-size:13px;">
+              <tr style="border-bottom:1px solid var(--border);">
+                 <th style="text-align:left; padding:8px 0; color:var(--text-tertiary); font-weight:500;">Feature</th>
+                 <th style="padding:8px 0; font-weight:600;">Salesforce</th>
+                 <th style="padding:8px 0; font-weight:600;">HubSpot</th>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                 <td style="padding:8px 0; color:var(--text-secondary);">Implementation Time</td>
+                 <td style="text-align:center; padding:8px 0;">4 Weeks</td>
+                 <td style="text-align:center; padding:8px 0;">2 Weeks</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                 <td style="padding:8px 0; color:var(--text-secondary);">Security Compliance</td>
+                 <td style="text-align:center; padding:8px 0;">SOC2, HIPAA</td>
+                 <td style="text-align:center; padding:8px 0;">SOC2</td>
+              </tr>
+           </table>
+        </div>
+      `;
+    } else {
+      contentHTML = `
+        <div class="form-group">
+          <label class="form-label">Justification for decision <span class="required-star">*</span></label>
+          <textarea class="form-textarea" placeholder="Provide a brief explanation for your choice..." style="min-height:120px;"></textarea>
+          <div style="margin-top:8px; font-size:12px; color:var(--text-tertiary);">You've selected HubSpot. Note: This differs from the AI recommendation.</div>
+        </div>
+      `;
+    }
+  } else if (currentArchetype === 'multi') {
+     contentHTML = `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; padding:12px; background:var(--surface-subtle); border-radius:8px; border:1px solid var(--border);">
+           ${getSteps().map((st, i) => `
+              <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                 <div style="width:24px; height:24px; border-radius:12px; background:${i <= currentStep ? 'var(--purple)' : 'var(--surface-sunken)'}; color:${i <= currentStep ? 'white' : 'var(--text-tertiary)'}; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center;">
+                    ${i < currentStep ? '✓' : i + 1}
+                 </div>
+                 ${i < getSteps().length - 1 ? `<div style="flex:1; height:2px; background:${i < currentStep ? 'var(--purple)' : 'var(--border)'};"></div>` : ''}
+              </div>
+           `).join('')}
+        </div>
+        <div class="form-section-title" style="font-size:14px; margin-bottom:16px;">${s.pageTitle} Context</div>
+        <div style="padding:16px; border:1px solid var(--border); border-radius:8px;">
+           <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+              ${s.id === 0 ? 'Manager review phase targets budget alignment and team priority.' : 
+                s.id === 1 ? 'Finance review verifies cost center availability and payment terms.' :
+                s.id === 2 ? 'Legal review ensures contract terms comply with organization standards.' :
+                'Final CPO approval for strategic alignment.'}
+           </div>
+        </div>
+        <div class="form-group" style="margin-top:24px;">
+           <label class="form-label">Review Notes</label>
+           <textarea class="form-textarea" placeholder="Add your review notes here..." style="min-height:100px;"></textarea>
+        </div>
+     `;
+  } else {
+    const forms = {
+      0: `
+      <div class="section-accordion">
+        <div class="section-accordion-header" onclick="toggleAccordion(this)">Contacts<svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="section-accordion-body">
+           <div class="form-group">
             <label class="form-label">Choose the contract you want to renew. <span class="required-star">*</span></label>
             <div class="input-wrap">
               <svg class="input-icon" width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
               <input class="form-input with-icon" type="text" placeholder="Search contracts">
             </div>
           </div>
-
           <div class="form-group">
-            <label class="form-label">What is the desired outcome for this renewal? <span class="required-star">*</span></label>
+            <label class="form-label">Outcome desired? <span class="required-star">*</span></label>
             <div class="radio-group">
               <label class="radio-item"><input type="radio" name="outcome" value="downgrade"> Downgrade</label>
-              <label class="radio-item"><input type="radio" name="outcome" value="flat"> Flat (no change)</label>
+              <label class="radio-item"><input type="radio" name="outcome" value="flat"> Flat</label>
               <label class="radio-item"><input type="radio" name="outcome" value="upgrade" checked> Upgrade</label>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Why do you want to upgrade? <span class="required-star">*</span></label>
-            <textarea class="form-textarea" placeholder="E.g., need more features (or premium features), need more capacity, team growth, require different products/line items..."></textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Do you personally use this software?</label>
-            <div class="radio-group">
-              <label class="radio-item"><input type="radio" name="personal" value="yes"> Yes</label>
-              <label class="radio-item"><input type="radio" name="personal" value="no"> No</label>
             </div>
           </div>
         </div>
       </div>`,
-
     1: `
       <div class="section-accordion">
         <div class="section-accordion-header" onclick="toggleAccordion(this)">
@@ -1212,7 +1473,6 @@ function renderForm() {
           </div>
         </div>
       </div>`,
-
     2: `
       <div class="section-accordion">
         <div class="section-accordion-header" onclick="toggleAccordion(this)">
@@ -1238,7 +1498,6 @@ function renderForm() {
           </div>
         </div>
       </div>`,
-
     3: `
       <div class="section-accordion">
         <div class="section-accordion-header" onclick="toggleAccordion(this)">
@@ -1265,7 +1524,6 @@ function renderForm() {
           </div>
         </div>
       </div>`,
-
     4: `
       <div class="section-accordion">
         <div class="section-accordion-header" onclick="toggleAccordion(this)">
@@ -1296,7 +1554,19 @@ function renderForm() {
       </div>`
   };
 
-  el.innerHTML = forms[currentStep] || forms[0];
+    contentHTML = forms[currentStep] || forms[0];
+  }
+
+  el.innerHTML = `
+    <div class="form-content-wrapper">
+      <div class="form-body-content">
+        ${contentHTML}
+      </div>
+      <div class="form-actions">
+        ${getActionsHTML()}
+      </div>
+    </div>
+  `;
 }
 
 function renderPanel() {
@@ -1309,97 +1579,66 @@ function renderPanel() {
       </div>
       <div style="margin-top:8px">
         <textarea class="form-textarea" placeholder="Add a comment…" style="min-height:60px;resize:none"></textarea>
-        <div style="display:flex;justify-content:flex-end;margin-top:6px">
-          <button class="btn btn-primary" style="height:28px;font-size:12px">Post</button>
-        </div>
       </div>`;
     return;
   }
 
   el.innerHTML = `
     <div class="ai-card">
-      <div class="ai-card-header">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5V8L10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Recommend Request
-      </div>
-      <div class="ai-card-body">Request is within budget with clear business justification. Standard approval path recommended.</div>
-      <div class="ai-card-footer">
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5L11 5.5L8.5 8L9 11.5L6 9.5L3 11.5L3.5 8L1 5.5L4.5 4.5L6 1Z" fill="currentColor"/></svg>
-        Powered by Vertice AI
-      </div>
+      <div class="ai-card-header">Recommend Request</div>
+      <div class="ai-card-body">Request is within budget with clear business justification.</div>
     </div>
+    <div style="margin-top:24px;">
+       <div class="form-section-title" style="font-size:12px; margin-bottom:12px;">Approval Chain</div>
+       <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+             <div style="width:20px; height:20px; border-radius:10px; background:var(--green); color:white; display:flex; align-items:center; justify-content:center; font-size:10px;">✓</div>
+             <div style="font-size:13px;">Team Lead <span style="color:var(--text-tertiary); font-size:11px;">(Approved)</span></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+             <div style="width:20px; height:20px; border-radius:10px; background:var(--purple); color:white; display:flex; align-items:center; justify-content:center; font-size:10px;">2</div>
+             <div style="font-size:13px; font-weight:600;">Finance Review <span style="color:var(--purple); font-size:11px;">(Current)</span></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; opacity:0.5;">
+             <div style="width:20px; height:20px; border-radius:10px; background:var(--surface-sunken); color:var(--text-tertiary); display:flex; align-items:center; justify-content:center; font-size:10px;">3</div>
+             <div style="font-size:13px;">Legal Counsel</div>
+          </div>
+       </div>
+    </div>
+  `;
+}
 
-    <div class="meta-row">
-      <div class="meta-row-label">Assignee</div>
-      <div class="meta-row-value">
-        <div class="meta-avatar">AC</div>
-        Alex Chen (You)
-      </div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-row-label">Cost Center</div>
-      <div class="meta-row-value">CC-DEMO-001 <span style="color:var(--text-tertiary);font-size:12px">{team.department}</span></div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-row-label">Budget</div>
-      <div class="meta-row-value">
-        $92,000
-        <span class="budget-badge">
-          <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5L4.5 7.5L8 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Within budget
-        </span>
-      </div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-row-label">Your Office</div>
-      <div class="meta-row-value">London</div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-row-label">Supplier known</div>
-      <div class="meta-row-value">Apple</div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-row-label">Business justification</div>
-      <div class="meta-row-value" style="font-style:italic">"Need CRM to support sales growth and improve customer relationships"</div>
-    </div>
+function getActionsHTML() {
+  const steps = getSteps();
+  const isFirst = currentStep === 0;
+  const isLast = currentStep === steps.length - 1;
 
-    <div class="divider"></div>
-
-    <div class="line-items-section">
-      <div class="line-items-header">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 6H11M5 9H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Line items (2)
+  if (currentArchetype === 'manager') {
+    return `
+      <div style="display:flex; gap:12px;">
+        <button class="btn btn-ghost" onclick="document.getElementById('delegate-picker').style.display='block'">Delegate</button>
+        <button class="btn btn-danger" onclick="document.getElementById('decline-reason').style.display='block'">Decline</button>
       </div>
-      <div class="line-item">
-        <div>
-          <div class="line-item-name">Enterprise CRM License</div>
-          <div class="line-item-type">Software</div>
-        </div>
-        <div class="line-item-amount">$75,000</div>
+      <button class="btn btn-primary" onclick="alert('Approved!')">Approve Request</button>`;
+  } else if (isLast) {
+    return `
+      <div style="display:flex; gap:12px;">
+        <button class="btn btn-ghost" onclick="prevStep()">Back</button>
+        <button class="btn btn-ghost">Save Draft</button>
       </div>
-      <div class="line-item">
-        <div>
-          <div class="line-item-name">Implementation & Training</div>
-          <div class="line-item-type">Services</div>
-        </div>
-        <div class="line-item-amount">$75,000</div>
+      <button class="btn btn-primary" onclick="alert('Submitted!')">Submit</button>`;
+  } else {
+    return `
+      <div style="display:flex; gap:12px;">
+         <button class="btn btn-ghost" onclick="prevStep()" style="${isFirst ? 'display:none' : ''}">Back</button>
+         <button class="btn btn-ghost">Save Draft</button>
       </div>
-    </div>`;
+      <button class="btn btn-next" onclick="nextStep()">Next <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
+  }
 }
 
 function renderFooter() {
-  const el = document.getElementById('modalFooter');
-  const isLast = currentStep === STEPS.length - 1;
-  if (isLast) {
-    el.innerHTML = `
-      <button class="btn btn-ghost" onclick="prevStep()">Back</button>
-      <button class="btn btn-danger" onclick="alert('Declined')">Decline</button>
-      <button class="btn btn-primary" onclick="alert('Approved!')">Approve</button>`;
-  } else {
-    el.innerHTML = `
-      ${currentStep > 0 ? '<button class="btn btn-ghost" onclick="prevStep()">Back</button>' : ''}
-      <button class="btn btn-next" onclick="nextStep()">Next <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
-  }
+  // HIDDEN - ACTIONS ARE NOW INLINE
 }
 
 function toggleAccordion(header) {
