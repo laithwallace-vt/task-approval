@@ -138,12 +138,16 @@
     align-items: center;
     gap: 8px;
     min-width: 0;
+    flex: 1;
+    overflow: hidden;
   }
   .task-title {
     font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .task-link {
     display: flex;
@@ -738,14 +742,43 @@
   .viewport.bp-600 .form-pane { border-right: none; }
   .viewport.bp-600 .details-panel { border-top: 1px solid var(--border); }
 
-  .viewport.bp-375 .modal-body { grid-template-columns: 1fr; }
-  .viewport.bp-375 .sidebar-nav { display: none; }
-  .viewport.bp-375 .step-strip { display: flex; }
+  /* bp-375: Full-screen modal */
+  .viewport.bp-375 .modal-wrap { padding: 0; min-height: 100%; align-items: stretch; }
+  .viewport.bp-375 .modal { border-radius: 0; height: 100%; max-height: none; box-shadow: none; border-left: none; border-right: none; border-bottom: none; }
+
+  /* bp-375: Header */
   .viewport.bp-375 .header-meta { display: none; }
+  .viewport.bp-375 .task-link { display: none; }
+  .viewport.bp-375 #btnSteps { display: none; }
+  .viewport.bp-375 #btnEdit { display: none; }
+  .viewport.bp-375 #btnActivity { display: none; }
+
+  /* bp-375: Show mobile tab bar, hide redundant panel tabs */
+  .viewport.bp-375 .mobile-tab-bar { display: flex; }
+  .viewport.bp-375 .panel-tabs { display: none; }
+
+  /* bp-375: Body layout */
+  .viewport.bp-375 .modal-body { grid-template-columns: 1fr; display: block; }
+  .viewport.bp-375 .sidebar-nav { display: none; }
   .viewport.bp-375 .form-pane { border-right: none; padding: 16px; }
-  .viewport.bp-375 .details-panel { border-top: 1px solid var(--border); }
-  .viewport.bp-375 .task-link .link-text { display: none; }
-  .viewport.bp-375 .modal-footer { padding: 10px 12px; }
+
+  /* bp-375: Step strip only visible on Task tab */
+  .viewport.bp-375 .step-strip { display: none; }
+  .viewport.bp-375 .modal.mobile-tab--task .step-strip { display: flex; }
+
+  /* bp-375: Tab content visibility */
+  .viewport.bp-375 .modal.mobile-tab--task .form-pane { display: block; }
+  .viewport.bp-375 .modal.mobile-tab--task .details-panel { display: none; }
+
+  .viewport.bp-375 .modal.mobile-tab--details .form-pane { display: none; }
+  .viewport.bp-375 .modal.mobile-tab--details .details-panel { display: block; border-top: none; }
+
+  .viewport.bp-375 .modal.mobile-tab--comments .form-pane { display: none; }
+  .viewport.bp-375 .modal.mobile-tab--comments .details-panel { display: block; border-top: none; }
+
+  /* bp-375: Footer full-width buttons */
+  .viewport.bp-375 .modal-footer { padding: 12px 16px; }
+  .viewport.bp-375 .modal-footer .btn { flex: 1; justify-content: center; }
 
   /* ── Transitions ── */
   .modal-body, .step-strip, .sidebar-nav, .details-panel { transition: all 0.2s ease; }
@@ -766,6 +799,33 @@
     vertical-align: middle;
   }
   .annotation.new { background: var(--purple); color: white; }
+
+  /* ── Mobile tab bar (375px only) ── */
+  .mobile-tab-bar {
+    display: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .mobile-tab-btn {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 12px 16px 12px 0;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .mobile-tab-btn:hover { color: var(--text-primary); }
+  .mobile-tab-btn.active {
+    color: var(--purple);
+    border-bottom-color: var(--purple);
+    font-weight: 500;
+  }
 
   /* ── Steps panel toggle btn (visible only at ≤600) ── */
   .steps-toggle-btn {
@@ -843,7 +903,7 @@
 <div class="viewport-wrap">
 <div class="viewport" id="viewport">
   <div class="modal-wrap">
-    <div class="modal" id="modal">
+    <div class="modal mobile-tab--task" id="modal">
 
       <!-- Slot 1: Header -->
       <div class="modal-header">
@@ -869,23 +929,30 @@
             </span>
           </div>
           <!-- Steps toggle (mobile) -->
-          <button class="steps-toggle-btn" onclick="openBottomSheet()">
+          <button class="steps-toggle-btn" id="btnSteps" onclick="openBottomSheet()">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="4" r="1.5" fill="currentColor"/><circle cx="4" cy="8" r="1.5" fill="currentColor"/><circle cx="4" cy="12" r="1.5" fill="currentColor"/><line x1="7" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Steps
           </button>
-          <button class="icon-btn" title="Edit">
+          <button class="icon-btn" id="btnEdit" title="Edit">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5L13.5 4.5L6 12L3 13L4 10L11.5 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
           </button>
           <button class="icon-btn" title="Comment">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13 2H3C2.45 2 2 2.45 2 3V10C2 10.55 2.45 11 3 11H5V14L8.33 11H13C13.55 11 14 10.55 14 10V3C14 2.45 13.55 2 13 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
           </button>
-          <button class="icon-btn" title="Activity">
+          <button class="icon-btn" id="btnActivity" title="Activity">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8H4L6 4L8 12L10 7L12 9H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <button class="icon-btn" title="Close" onclick="alert('Close')">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3L13 13M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           </button>
         </div>
+      </div>
+
+      <!-- Mobile tab bar (375px only) -->
+      <div class="mobile-tab-bar" id="mobileTabBar">
+        <button class="mobile-tab-btn active" data-tab="task" onclick="switchMobileTab('task')">Task</button>
+        <button class="mobile-tab-btn" data-tab="details" onclick="switchMobileTab('details')">Details</button>
+        <button class="mobile-tab-btn" data-tab="comments" onclick="switchMobileTab('comments')">Comments</button>
       </div>
 
       <!-- Slot 1.5: Step strip (responsive) — NEW COMPONENT -->
@@ -992,6 +1059,22 @@ function openBottomSheet() {
 function closeBottomSheet() {
   document.getElementById('sheetOverlay').classList.remove('open');
   document.getElementById('bottomSheet').classList.remove('open');
+}
+
+// ── Mobile tab bar (375px) ──
+function switchMobileTab(tab) {
+  const modal = document.getElementById('modal');
+  modal.classList.remove('mobile-tab--task', 'mobile-tab--details', 'mobile-tab--comments');
+  modal.classList.add('mobile-tab--' + tab);
+  // Sync right panel to correct tab
+  if (tab === 'details' || tab === 'comments') {
+    const panelTabEl = document.querySelector(`.panel-tab[onclick*="'${tab}'"]`);
+    if (panelTabEl) switchPanelTab(tab, panelTabEl);
+  }
+  // Update tab bar active state
+  document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
 }
 
 // ── Panel tabs ──
