@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Task Shell — Slot Model Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f1f5;
+  --surface: #ffffff;
+  --slot-1: #5b21b6; --slot-1-bg: rgba(91,33,182,0.07); --slot-1-bd: rgba(91,33,182,0.22);
+  --slot-2: #0369a1; --slot-2-bg: rgba(3,105,161,0.07); --slot-2-bd: rgba(3,105,161,0.22);
+  --slot-3: #0f766e; --slot-3-bg: rgba(15,118,110,0.07); --slot-3-bd: rgba(15,118,110,0.22);
+  --slot-4: #b45309; --slot-4-bg: rgba(180,83,9,0.07); --slot-4-bd: rgba(180,83,9,0.22);
+  --cond: #6b7280; --cond-bg: rgba(107,114,128,0.06); --cond-bd: rgba(107,114,128,0.18);
+  --text-1: rgba(10,15,30,0.90); --text-2: rgba(10,15,30,0.55); --text-3: rgba(10,15,30,0.35);
+  --r: 6px; --r-lg: 10px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Geist', system-ui, sans-serif; background: var(--bg); color: var(--text-1); font-size: 13px; -webkit-font-smoothing: antialiased; padding: 40px 32px 60px; min-height: 100vh; }
+.page-head { max-width: 1080px; margin: 0 auto 28px; }
+.page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.03em; color: var(--text-1); margin-bottom: 5px; }
+.page-sub { font-size: 13px; color: var(--text-3); line-height: 1.5; }
+.legend { max-width: 1080px; margin: 0 auto 28px; display: flex; flex-wrap: wrap; gap: 6px; }
+.leg { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 8px; border-radius: 13px; font-size: 11px; font-weight: 500; border: 1px solid; white-space: nowrap; }
+.leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.outer { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr 276px; gap: 24px; align-items: start; }
+.wireframe { background: var(--surface); border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 24px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04); overflow: hidden; }
+.wf-slot { position: relative; border-bottom: 1px solid rgba(0,0,0,0.07); }
+.wf-slot:last-child { border-bottom: none; }
+.wf-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.wf-inner { padding: 14px 16px 14px 22px; }
+.slot-pill { display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; border-radius: 4px; font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500; border: 1px solid; margin-bottom: 8px; white-space: nowrap; }
+.wf-slot-title { font-size: 12px; font-weight: 600; color: var(--text-1); margin-bottom: 3px; }
+.wf-slot-desc { font-size: 11px; color: var(--text-3); line-height: 1.5; margin-bottom: 10px; }
+.mock-row { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: var(--r); background: #f8f9fb; border: 1px solid rgba(0,0,0,0.06); margin-bottom: 6px; min-height: 34px; flex-wrap: wrap; }
+.mock-chip { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 4px; font-size: 10px; font-weight: 500; border: 1px solid; white-space: nowrap; flex-shrink: 0; }
+.mock-spacer { flex: 1; }
+.cond-badge { display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 6px; border-radius: 4px; background: var(--cond-bg); border: 1px solid var(--cond-bd); font-family: 'Geist Mono', monospace; font-size: 9px; font-weight: 500; color: var(--cond); white-space: nowrap; flex-shrink: 0; }
+.zone-block { border-radius: var(--r); border: 1px solid rgba(0,0,0,0.08); background: #f8f9fb; padding: 8px 10px; margin-bottom: 5px; display: flex; align-items: center; gap: 7px; }
+.zone-block:last-child { margin-bottom: 0; }
+.zone-num { width: 18px; height: 18px; border-radius: 4px; background: var(--slot-2-bg); border: 1px solid var(--slot-2-bd); color: var(--slot-2); font-family: 'Geist Mono', monospace; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.zone-label { font-size: 11px; color: var(--text-2); font-family: 'Geist Mono', monospace; }
+.zone-type { margin-left: auto; font-size: 10px; color: var(--text-3); font-family: 'Geist Mono', monospace; }
+.wf-body-panel { display: flex; border-bottom: 1px solid rgba(0,0,0,0.07); min-height: 230px; }
+.wf-body-col { flex: 1; padding: 14px 16px 14px 22px; border-right: 1px solid rgba(0,0,0,0.07); position: relative; }
+.wf-panel-col { width: 172px; flex-shrink: 0; padding: 12px 14px 12px 18px; background: #fafafa; position: relative; }
+.panel-section-row { display: flex; gap: 4px; margin-bottom: 9px; }
+.panel-section-tab { width: 28px; height: 28px; border-radius: var(--r); border: 1px solid rgba(0,0,0,0.08); background: #f3f4f6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.panel-section-tab.active { background: var(--slot-3-bg); border-color: var(--slot-3-bd); }
+.panel-section-tab.active svg { color: var(--slot-3) !important; }
+.panel-content-block { border-radius: var(--r); background: #f0f1f4; padding: 8px 9px; margin-bottom: 5px; }
+.panel-content-line { height: 7px; border-radius: 3px; background: rgba(0,0,0,0.09); margin-bottom: 5px; }
+.panel-content-line:last-child { margin-bottom: 0; }
+.no-panel-note { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: var(--r); border: 1px dashed rgba(0,0,0,0.12); font-size: 10px; color: var(--text-3); font-family: 'Geist Mono', monospace; margin-top: 6px; }
+.ann-line { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; font-size: 10px; color: var(--text-3); line-height: 1.5; }
+.ann-line svg { width: 11px; height: 11px; flex-shrink: 0; margin-top: 1px; }
+.action-row { display: flex; align-items: center; gap: 7px; }
+.mock-btn { height: 28px; padding: 0 12px; border-radius: var(--r); font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; white-space: nowrap; border: 1px solid; }
+.right-col { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 20px; }
+.info-card { background: var(--surface); border-radius: var(--r-lg); border: 1px solid rgba(0,0,0,0.08); overflow: hidden; }
+.info-card-head { padding: 9px 14px; border-bottom: 1px solid rgba(0,0,0,0.07); font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; background: #f8f9fb; }
+.info-card-body { padding: 12px 14px; }
+.rule-row { display: flex; gap: 7px; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 11px; line-height: 1.5; }
+.rule-row:last-child { border-bottom: none; padding-bottom: 0; }
+.rule-icon { font-size: 13px; flex-shrink: 0; }
+.rule-text { color: var(--text-2); }
+.rule-text strong { color: var(--text-1); font-weight: 500; }
+.density-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.density-box { border-radius: var(--r); border: 1px solid; padding: 9px 10px; }
+.density-label { font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 600; margin-bottom: 4px; }
+.density-sub { font-size: 10px; color: var(--text-3); line-height: 1.4; }
+.section-array { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.section-item { display: flex; align-items: center; gap: 4px; padding: 4px 7px; border-radius: 4px; font-family: 'Geist Mono', monospace; font-size: 10px; border: 1px solid; }
+.section-idx { width: 14px; height: 14px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; }
+.prop-row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 11px; }
+.prop-row:last-child { border-bottom: none; }
+.prop-key { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--text-1); }
+.prop-val { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--text-3); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="page-title">Task Shell — Slot Model</div>
+  <div class="page-sub">The shell has 4 named slots. The form definition populates them. The shell HTML never changes between task types.</div>
+</div>
+
+<div class="legend">
+  <div class="leg" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);color:var(--slot-1);"><div class="leg-dot" style="background:var(--slot-1);"></div>Slot 1 · Header</div>
+  <div class="leg" style="background:var(--slot-2-bg);border-color:var(--slot-2-bd);color:var(--slot-2);"><div class="leg-dot" style="background:var(--slot-2);"></div>Slot 2 · Body</div>
+  <div class="leg" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="leg-dot" style="background:var(--slot-3);"></div>Slot 3 · Panel</div>
+  <div class="leg" style="background:var(--slot-4-bg);border-color:var(--slot-4-bd);color:var(--slot-4);"><div class="leg-dot" style="background:var(--slot-4);"></div>Slot 4 · Actions</div>
+  <div class="leg" style="background:var(--cond-bg);border-color:var(--cond-bd);color:var(--cond);"><div class="leg-dot" style="background:var(--cond);"></div>Conditional sub-slot</div>
+</div>
+
+<div class="outer">
+
+  <!-- WIREFRAME -->
+  <div class="wireframe">
+
+    <!-- SLOT 1 -->
+    <div class="wf-slot">
+      <div class="wf-accent" style="background:var(--slot-1);"></div>
+      <div class="wf-inner">
+        <div class="slot-pill" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);color:var(--slot-1);">SLOT 1 · header-chrome · always present</div>
+        <div class="wf-slot-title">Header</div>
+        <div class="wf-slot-desc">Receives: type label, breadcrumb, status pill. Generates icon buttons automatically from panelSections[].</div>
+
+        <div class="mock-row">
+          <div class="mock-chip" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);color:var(--slot-1);">Manager Approval</div>
+          <div class="mock-chip" style="background:#f3f4f6;border-color:rgba(0,0,0,0.1);color:var(--text-2);">⬤ Google New Purchase ↗</div>
+          <!-- 1a conditional -->
+          <div class="cond-badge">1a · if density="dense" → assignee + due date here</div>
+          <div class="mock-spacer"></div>
+          <div class="mock-chip" style="background:#ede9fe;border-color:#c4b5fd;color:#5b21b6;">Action required</div>
+          <!-- auto-generated panel icon buttons -->
+          <div style="display:flex;gap:4px;align-items:center;">
+            <div style="font-size:9px;font-family:'Geist Mono',monospace;color:var(--text-3);margin-right:3px;">← auto from sections[]</div>
+            <div style="width:26px;height:26px;border-radius:5px;border:1px solid rgba(0,0,0,0.1);background:#f3f4f6;display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+            <div style="width:26px;height:26px;border-radius:5px;border:1px solid #c4b5fd;background:#ede9fe;display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#5b21b6" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg></div>
+            <div style="width:26px;height:26px;border-radius:5px;border:1px solid rgba(0,0,0,0.1);background:#f3f4f6;display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          </div>
+          <div style="width:26px;height:26px;border-radius:5px;border:1px solid rgba(0,0,0,0.1);background:#f3f4f6;display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLOT 2 + 3 SIDE BY SIDE -->
+    <div class="wf-body-panel">
+
+      <!-- SLOT 2: BODY -->
+      <div class="wf-body-col">
+        <div class="wf-accent" style="background:var(--slot-2);"></div>
+        <div class="slot-pill" style="background:var(--slot-2-bg);border-color:var(--slot-2-bd);color:var(--slot-2);">SLOT 2 · body · always present</div>
+        <div class="wf-slot-title">Body</div>
+        <div class="wf-slot-desc">Title always first. Meta (2a) conditional. Then zones[] rendered in order.</div>
+
+        <div style="font-size:15px;font-weight:500;color:var(--text-1);margin-bottom:8px;line-height:1.3;">Approve SaaS renewal for Google</div>
+
+        <!-- 2a conditional -->
+        <div class="mock-row" style="background:var(--cond-bg);border-color:var(--cond-bd);margin-bottom:10px;">
+          <div class="cond-badge">2a · body-meta · if density="sparse"</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);">
+            <div style="width:16px;height:16px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#5b21b6;">AC</div>
+            Alex Chen · Due Mar 29
+          </div>
+        </div>
+
+        <div style="font-size:9px;font-family:'Geist Mono',monospace;color:var(--slot-2);margin-bottom:5px;letter-spacing:0.04em;text-transform:uppercase;">zones[ ] in declaration order</div>
+        <div class="zone-block"><div class="zone-num">0</div><div class="zone-label">vendor-card</div><div class="zone-type">{ vendor, data[], accordion }</div></div>
+        <div class="zone-block"><div class="zone-num">1</div><div class="zone-label">offer-tabs</div><div class="zone-type">{ tabs[], fields[] }</div></div>
+        <div class="zone-block"><div class="zone-num">2</div><div class="zone-label">reason</div><div class="zone-type">{ label }</div></div>
+
+        <div class="ann-line">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          New zone type = add renderer function. Shell iterates array. Zone count drives nothing.
+        </div>
+      </div>
+
+      <!-- SLOT 3: PANEL -->
+      <div class="wf-panel-col">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--slot-3);"></div>
+        <div class="slot-pill" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);margin-bottom:8px;">SLOT 3 · panel · if sections[] not empty</div>
+        <div class="wf-slot-title" style="margin-bottom:4px;">Panel</div>
+        <div style="font-size:10px;color:var(--text-3);line-height:1.4;margin-bottom:9px;">Receives ordered sections[]. Icon buttons generated in same order. First entry = default open.</div>
+
+        <div class="panel-section-row">
+          <div class="panel-section-tab active" title="AI Insights"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div class="panel-section-tab" title="Details"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg></div>
+          <div class="panel-section-tab" title="Comments"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        </div>
+
+        <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--slot-3);margin-bottom:6px;border-bottom:1.5px solid var(--slot-3);display:inline-block;padding-bottom:2px;">AI Insights</div>
+
+        <div class="panel-content-block">
+          <div class="panel-content-line"></div>
+          <div class="panel-content-line"></div>
+          <div class="panel-content-line" style="width:55%;"></div>
+        </div>
+        <div class="panel-content-block">
+          <div class="panel-content-line"></div>
+          <div class="panel-content-line" style="width:70%;"></div>
+        </div>
+
+        <div class="ann-line">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Tap active icon again → closes. Body reclaims full width.
+        </div>
+
+        <div class="no-panel-note">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          sections[] empty → no panel
+        </div>
+      </div>
+    </div>
+
+    <!-- SLOT 4 -->
+    <div class="wf-slot">
+      <div class="wf-accent" style="background:var(--slot-4);"></div>
+      <div class="wf-inner">
+        <div class="slot-pill" style="background:var(--slot-4-bg);border-color:var(--slot-4-bd);color:var(--slot-4);">SLOT 4 · actions · always present</div>
+        <div class="wf-slot-title">Actions</div>
+        <div class="wf-slot-desc">Receives typed action objects. Shell positions by <span style="font-family:'Geist Mono',monospace;">role</span> only — never by task type.</div>
+
+        <div class="action-row">
+          <div style="font-size:9px;font-family:'Geist Mono',monospace;color:var(--text-3);">role="secondary" →</div>
+          <div class="mock-btn" style="background:#f3f4f6;border-color:rgba(0,0,0,0.12);color:var(--text-2);">Request info</div>
+          <div class="mock-spacer"></div>
+          <div style="font-size:9px;font-family:'Geist Mono',monospace;color:var(--text-3);">role="destructive" →</div>
+          <div class="mock-btn" style="background:#fef2f2;border-color:#fca5a5;color:#b91c1c;">Decline</div>
+          <div style="font-size:9px;font-family:'Geist Mono',monospace;color:var(--text-3);">role="primary" →</div>
+          <div class="mock-btn" style="background:#5b21b6;border-color:#5b21b6;color:#fff;">Approve</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /wireframe -->
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <!-- Density rule -->
+    <div class="info-card">
+      <div class="info-card-head">Meta placement — density rule</div>
+      <div class="info-card-body">
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;line-height:1.5;"><code style="font-family:'Geist Mono',monospace;color:var(--text-2);">body_density</code> set explicitly by form author. Never inferred from zone count.</div>
+        <div class="density-pair">
+          <div class="density-box" style="background:var(--cond-bg);border-color:var(--cond-bd);">
+            <div class="density-label" style="color:var(--cond);">"sparse"</div>
+            <div class="density-sub">1–2 zones. Meta in body (slot 2a). Decision-focused.</div>
+          </div>
+          <div class="density-box" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);">
+            <div class="density-label" style="color:var(--slot-1);">"dense"</div>
+            <div class="density-sub">3+ zones. Meta in header (slot 1a). Body needs height.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel section types -->
+    <div class="info-card">
+      <div class="info-card-head">Panel section types</div>
+      <div class="info-card-body">
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px;line-height:1.5;">Ordered array. First entry = default open. Empty = no panel.</div>
+        <div class="section-array">
+          <div class="section-item" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="section-idx" style="background:var(--slot-3-bg);color:var(--slot-3);">0</div>"ai"</div>
+          <div class="section-item" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="section-idx" style="background:var(--slot-3-bg);color:var(--slot-3);">1</div>"details"</div>
+          <div class="section-item" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="section-idx" style="background:var(--slot-3-bg);color:var(--slot-3);">2</div>"comments"</div>
+          <div class="section-item" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="section-idx" style="background:var(--slot-3-bg);color:var(--slot-3);">+</div>"documents"</div>
+        </div>
+        <div class="no-panel-note" style="margin-top:8px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>[] empty → no panel, no buttons</div>
+      </div>
+    </div>
+
+    <!-- Key rules -->
+    <div class="info-card">
+      <div class="info-card-head">Key rules</div>
+      <div class="info-card-body">
+        <div class="rule-row"><span class="rule-icon">🔒</span><span class="rule-text"><strong>Shell HTML never changes</strong> between task types. All variation is in the definition object.</span></div>
+        <div class="rule-row"><span class="rule-icon">↕</span><span class="rule-text"><strong>Zones render in array order.</strong> No layout logic inside the shell.</span></div>
+        <div class="rule-row"><span class="rule-icon">📋</span><span class="rule-text"><strong>Comments is just a section type.</strong> Not a named concept the shell knows about.</span></div>
+        <div class="rule-row"><span class="rule-icon">🎯</span><span class="rule-text"><strong>Buttons positioned by role,</strong> not by task type. Secondary left, rest right.</span></div>
+        <div class="rule-row"><span class="rule-icon">⚡</span><span class="rule-text"><strong>Urgency override:</strong> dueDate ≤ 24h always pushes meta to header regardless of density.</span></div>
+      </div>
+    </div>
+
+    <!-- Adding new task type -->
+    <div class="info-card">
+      <div class="info-card-head">Adding a new task type</div>
+      <div class="info-card-body">
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;">No shell changes. One definition object:</div>
+        <div class="prop-row"><span class="prop-key">type</span><span class="prop-val">string</span></div>
+        <div class="prop-row"><span class="prop-key">body_density</span><span class="prop-val">"sparse"|"dense"</span></div>
+        <div class="prop-row"><span class="prop-key">zones[]</span><span class="prop-val">Zone[]</span></div>
+        <div class="prop-row"><span class="prop-key">panelSections[]</span><span class="prop-val">Section[]</span></div>
+        <div class="prop-row"><span class="prop-key">actions[]</span><span class="prop-val">Action[]</span></div>
+      </div>
+    </div>
+
+  </div><!-- /right-col -->
+</div>
+
+</body>
+</html>

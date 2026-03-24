@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Approval · Responsive Prototype</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --purple: #7C5CFC;
+    --purple-light: #EDE9FF;
+    --purple-dim: rgba(124, 92, 252, 0.12);
+    --red: #E5403A;
+    --red-light: #FFF0F0;
+    --green: #16A34A;
+    --green-light: #F0FDF4;
+    --text-primary: rgba(15,15,20,1);
+    --text-secondary: rgba(15,15,20,0.6);
+    --text-tertiary: rgba(15,15,20,0.4);
+    --border: rgba(15,15,20,0.1);
+    --border-focus: rgba(124,92,252,0.5);
+    --surface: #ffffff;
+    --surface-hover: rgba(15,15,20,0.04);
+    --surface-subtle: #F8F8FA;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --shadow-modal: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    --font: 'DM Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: #EEEEF2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Breakpoint toggle bar ── */
+  .bp-bar {
+    background: #1A1A22;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    flex-shrink: 0;
+  }
+  .bp-label {
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-right: 8px;
+  }
+  .bp-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 5px;
+    color: rgba(255,255,255,0.5);
+    font-family: var(--font);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 5px 12px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bp-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+  .bp-btn.active {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: #fff;
+  }
+  .bp-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.1); margin: 0 8px; }
+
+  /* ── Viewport wrapper ── */
+  .viewport-wrap {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  .viewport {
+    width: 100%;
+    max-width: 1440px;
+    transition: max-width 0.3s cubic-bezier(0.4,0,0.2,1);
+    background: #EEEEF2;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  }
+  .viewport.bp-900 { max-width: 900px; }
+  .viewport.bp-600 { max-width: 600px; }
+  .viewport.bp-375 { max-width: 375px; }
+
+  /* ── Modal scaffold ── */
+  .modal-wrap {
+    padding: 32px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 600px;
+  }
+
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-modal);
+    width: 100%;
+    max-width: 960px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header (Slot 1) ── */
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 48px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 12px;
+  }
+  .modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .task-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .task-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .task-link:hover { color: var(--purple); }
+  .task-link svg { flex-shrink: 0; }
+  .modal-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-right: 8px;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .meta-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a78bfa, #7C5CFC);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: white;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: background 0.12s, color 0.12s;
+  }
+  .icon-btn:hover { background: var(--surface-hover); color: var(--text-primary); }
+
+  /* ── Step strip (mobile stepper - Slot 1.5) ── */
+  .step-strip {
+    display: none;
+    align-items: center;
+    padding: 0 16px;
+    height: 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .step-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .step-back-btn:hover { color: var(--purple); }
+  .step-strip-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .step-strip-label {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .step-strip-count {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+  .step-progress-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .step-progress-track {
+    width: 56px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .step-progress-fill {
+    height: 100%;
+    background: var(--purple);
+    border-radius: 2px;
+    transition: width 0.25s ease;
+  }
+  /* Step dots for very small */
+  .step-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .step-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+  .step-dot.active { background: var(--purple); }
+  .step-dot.done { background: var(--purple); opacity: 0.4; }
+
+  /* ── Body layout (Slot 2 + 3) ── */
+  .modal-body {
+    display: grid;
+    grid-template-columns: 200px 1fr 280px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar nav (left) ── */
+  .sidebar-nav {
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    overflow-y: auto;
+  }
+  .sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+    position: relative;
+  }
+  .sidebar-nav-item:hover { background: var(--surface-hover); color: var(--text-primary); }
+  .sidebar-nav-item.active {
+    color: var(--purple);
+    background: var(--purple-dim);
+    font-weight: 500;
+  }
+  .sidebar-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    background: var(--purple);
+    border-radius: 0 2px 2px 0;
+  }
+  .step-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-tertiary);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .sidebar-nav-item.active .step-indicator {
+    background: var(--purple);
+    border-color: var(--purple);
+  }
+  .sidebar-nav-item.done .step-indicator {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  /* ── Form body (centre) ── */
+  .form-pane {
+    overflow-y: auto;
+    padding: 20px 24px;
+    border-right: 1px solid var(--border);
+  }
+  .section-accordion {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .section-accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    background: var(--surface);
+    transition: background 0.1s;
+    user-select: none;
+  }
+  .section-accordion-header:hover { background: var(--surface-hover); }
+  .section-accordion-body { padding: 16px; border-top: 1px solid var(--border); }
+
+  .form-section-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .form-section-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+  }
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-label {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .required-star { color: var(--red); }
+  .form-input {
+    width: 100%;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .form-input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.1);
+  }
+  .form-input.with-icon { padding-left: 28px; }
+  .input-wrap { position: relative; }
+  .input-icon {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+  .form-textarea {
+    width: 100%;
+    min-height: 72px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--text-secondary);
+    background: var(--surface);
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .form-textarea:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.1);
+  }
+  .radio-group { display: flex; flex-direction: column; gap: 8px; }
+  .radio-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .radio-item input[type="radio"] { accent-color: var(--purple); width: 14px; height: 14px; cursor: pointer; }
+
+  /* ── Right panel (Slot 3) ── */
+  .details-panel {
+    overflow-y: auto;
+    padding: 0;
+  }
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .panel-tab {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 12px 0;
+    margin-right: 20px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .panel-tab:hover { color: var(--text-primary); }
+  .panel-tab.active {
+    color: var(--purple);
+    border-bottom-color: var(--purple);
+    font-weight: 500;
+  }
+  .panel-content { padding: 16px; }
+  .ai-card {
+    border: 1px solid var(--purple);
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    margin-bottom: 16px;
+    background: var(--purple-light);
+  }
+  .ai-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--purple);
+    margin-bottom: 6px;
+  }
+  .ai-card-body {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .ai-card-footer {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 14px;
+  }
+  .meta-row-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .meta-row-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .budget-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    color: var(--green);
+    background: var(--green-light);
+    border-radius: 10px;
+    padding: 1px 6px;
+  }
+  .line-items-section { margin-top: 4px; }
+  .line-items-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .line-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .line-item:last-child { border-bottom: none; }
+  .line-item-name { font-size: 13px; color: var(--text-primary); }
+  .line-item-type { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+  .line-item-amount { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+
+  /* ── Footer (Slot 4) ── */
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .btn {
+    height: 32px;
+    border-radius: var(--radius-md);
+    border: none;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0 14px;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface-hover); color: var(--text-primary); }
+  .btn-danger {
+    background: var(--red);
+    color: white;
+  }
+  .btn-danger:hover { background: #c93530; }
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+  }
+  .btn-primary:hover { background: #6a4de0; }
+  .btn-next {
+    background: var(--purple);
+    color: white;
+  }
+  .btn-next:hover { background: #6a4de0; }
+
+  /* ── Bottom sheet (mobile) ── */
+  .bottom-sheet-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .bottom-sheet-overlay.open {
+    display: block;
+    opacity: 1;
+  }
+  .bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-radius: 12px 12px 0 0;
+    padding: 0 0 env(safe-area-inset-bottom, 0);
+    z-index: 501;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+  .bottom-sheet.open {
+    transform: translateY(0);
+  }
+  .sheet-handle {
+    width: 32px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto 0;
+  }
+  .sheet-header {
+    padding: 12px 16px 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+  }
+  .sheet-steps {
+    padding: 8px 0 16px;
+  }
+  .sheet-step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .sheet-step-item:hover { background: var(--surface-hover); }
+  .sheet-step-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .sheet-step-item.active .sheet-step-indicator {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: white;
+  }
+  .sheet-step-item.done .sheet-step-indicator {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+  }
+  .sheet-step-name { font-size: 13px; color: var(--text-primary); }
+  .sheet-step-item.active .sheet-step-name { font-weight: 500; color: var(--purple); }
+  .sheet-step-item.done .sheet-step-name { color: var(--text-secondary); }
+
+  /* ── BREAKPOINT RESPONSIVE RULES ── */
+
+  /* 900px: Collapse sidebar → step strip, panel stays as tab */
+  @media (max-width: 900px) {
+    .modal-wrap { padding: 16px; }
+    .modal-body { grid-template-columns: 1fr 280px; }
+    .sidebar-nav { display: none; }
+    .step-strip { display: flex; }
+    .header-meta { display: none; }
+  }
+
+  /* 700px: Stack panel under form (full width tabs) */
+  @media (max-width: 700px) {
+    .modal-body { grid-template-columns: 1fr; }
+    .form-pane { border-right: none; }
+    .details-panel { border-top: 1px solid var(--border); }
+    .panel-tabs { position: relative; }
+  }
+
+  /* 480px: Compact header, details panel as bottom-accessible */
+  @media (max-width: 480px) {
+    .modal-wrap { padding: 8px; }
+    .task-link .link-text { display: none; }
+    .step-strip-label { font-size: 12px; }
+    .form-pane { padding: 16px; }
+    .panel-content { padding: 12px; }
+    .modal-footer {
+      padding: 10px 12px;
+    }
+    /* On mobile, show step count as dots not text */
+    .step-strip-count { display: none; }
+  }
+
+  /* ── Viewport-scoped overrides (for the demo toggle) ── */
+  .viewport.bp-900 .modal-body { grid-template-columns: 1fr 280px; }
+  .viewport.bp-900 .sidebar-nav { display: none; }
+  .viewport.bp-900 .step-strip { display: flex; }
+  .viewport.bp-900 .header-meta { display: none; }
+
+  .viewport.bp-600 .modal-body { grid-template-columns: 1fr; }
+  .viewport.bp-600 .sidebar-nav { display: none; }
+  .viewport.bp-600 .step-strip { display: flex; }
+  .viewport.bp-600 .header-meta { display: none; }
+  .viewport.bp-600 .form-pane { border-right: none; }
+  .viewport.bp-600 .details-panel { border-top: 1px solid var(--border); }
+
+  .viewport.bp-375 .modal-body { grid-template-columns: 1fr; }
+  .viewport.bp-375 .sidebar-nav { display: none; }
+  .viewport.bp-375 .step-strip { display: flex; }
+  .viewport.bp-375 .header-meta { display: none; }
+  .viewport.bp-375 .form-pane { border-right: none; padding: 16px; }
+  .viewport.bp-375 .details-panel { border-top: 1px solid var(--border); }
+  .viewport.bp-375 .task-link .link-text { display: none; }
+  .viewport.bp-375 .modal-footer { padding: 10px 12px; }
+
+  /* ── Transitions ── */
+  .modal-body, .step-strip, .sidebar-nav, .details-panel { transition: all 0.2s ease; }
+
+  /* ── Annotation badges ── */
+  .annotation {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    background: #1A1A22;
+    color: rgba(255,255,255,0.7);
+    border-radius: 10px;
+    padding: 2px 7px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .annotation.new { background: var(--purple); color: white; }
+
+  /* ── Steps panel toggle btn (visible only at ≤600) ── */
+  .steps-toggle-btn {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    padding: 3px 8px;
+    transition: all 0.15s;
+  }
+  .steps-toggle-btn:hover { border-color: var(--purple); color: var(--purple); }
+  .viewport.bp-600 .steps-toggle-btn,
+  .viewport.bp-375 .steps-toggle-btn { display: flex; }
+
+  /* icon sizes */
+  svg { display: block; }
+
+  /* ── App icon pill ── */
+  .app-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+  .app-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+  }
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Breakpoint toggle bar -->
+<div class="bp-bar">
+  <span class="bp-label">Breakpoint</span>
+  <button class="bp-btn active" onclick="setBreakpoint('full', this)">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    1440px
+  </button>
+  <button class="bp-btn" onclick="setBreakpoint('bp-900', this)">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    900px
+  </button>
+  <button class="bp-btn" onclick="setBreakpoint('bp-600', this)">
+    <svg width="11" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    600px
+  </button>
+  <button class="bp-btn" onclick="setBreakpoint('bp-375', this)">
+    <svg width="9" height="13" viewBox="0 0 16 16" fill="none"><rect x="4" y="1" width="8" height="14" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    375px
+  </button>
+  <div class="bp-divider"></div>
+  <span class="bp-label" style="margin-right:0; color:rgba(255,255,255,0.6)">Step</span>
+  <button class="bp-btn" onclick="goToStep(0)">1</button>
+  <button class="bp-btn" onclick="goToStep(1)">2</button>
+  <button class="bp-btn" onclick="goToStep(2)">3</button>
+  <button class="bp-btn" onclick="goToStep(3)">4</button>
+  <button class="bp-btn" onclick="goToStep(4)">5</button>
+</div>
+
+<div class="viewport-wrap">
+<div class="viewport" id="viewport">
+  <div class="modal-wrap">
+    <div class="modal" id="modal">
+
+      <!-- Slot 1: Header -->
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <span class="task-title">Manager Approval</span>
+          <a href="#" class="task-link" onclick="return false;">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M9 7L14 2M14 2H10M14 2V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span class="link-text app-pill">
+              <span style="width:10px;height:10px;background:linear-gradient(135deg,#f59e0b,#ef4444,#3b82f6,#22c55e);border-radius:2px;display:inline-block"></span>
+              New Purchase
+            </span>
+          </a>
+        </div>
+        <div class="modal-header-right">
+          <div class="header-meta">
+            <span class="meta-item">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 2V4M11 2V4M2 7H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              Due Mar 29, 2026
+            </span>
+            <span class="meta-item">
+              <div class="meta-avatar">LW</div>
+              Laith Wallace
+            </span>
+          </div>
+          <!-- Steps toggle (mobile) -->
+          <button class="steps-toggle-btn" onclick="openBottomSheet()">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="4" r="1.5" fill="currentColor"/><circle cx="4" cy="8" r="1.5" fill="currentColor"/><circle cx="4" cy="12" r="1.5" fill="currentColor"/><line x1="7" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Steps
+          </button>
+          <button class="icon-btn" title="Edit">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5L13.5 4.5L6 12L3 13L4 10L11.5 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="icon-btn" title="Comment">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13 2H3C2.45 2 2 2.45 2 3V10C2 10.55 2.45 11 3 11H5V14L8.33 11H13C13.55 11 14 10.55 14 10V3C14 2.45 13.55 2 13 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="icon-btn" title="Activity">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8H4L6 4L8 12L10 7L12 9H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="icon-btn" title="Close" onclick="alert('Close')">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 3L13 13M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Slot 1.5: Step strip (responsive) — NEW COMPONENT -->
+      <div class="step-strip" id="stepStrip">
+        <button class="step-back-btn" onclick="prevStep()" id="backBtn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Back
+        </button>
+        <div class="step-strip-center">
+          <span class="step-strip-label" id="stepStripLabel">Renewal reason</span>
+          <span class="step-strip-count" id="stepStripCount">1 of 5</span>
+        </div>
+        <div class="step-progress-wrap">
+          <div class="step-progress-track">
+            <div class="step-progress-fill" id="stepProgressFill" style="width: 20%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Body grid -->
+      <div class="modal-body">
+
+        <!-- Left: Sidebar nav -->
+        <div class="sidebar-nav" id="sidebarNav">
+          <!-- injected by JS -->
+        </div>
+
+        <!-- Centre: Form pane -->
+        <div class="form-pane" id="formPane">
+          <!-- injected by JS -->
+        </div>
+
+        <!-- Right: Details panel -->
+        <div class="details-panel" id="detailsPanel">
+          <div class="panel-tabs">
+            <div class="panel-tab" onclick="switchPanelTab('comments', this)">Comments</div>
+            <div class="panel-tab active" onclick="switchPanelTab('details', this)">Details</div>
+          </div>
+          <div class="panel-content" id="panelContent">
+            <!-- injected by JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Slot 4: Footer -->
+      <div class="modal-footer" id="modalFooter">
+        <!-- injected by JS -->
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Bottom sheet (steps on mobile) -->
+<div class="bottom-sheet-overlay" id="sheetOverlay" onclick="closeBottomSheet()"></div>
+<div class="bottom-sheet" id="bottomSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">Steps</div>
+  <div class="sheet-steps" id="sheetSteps">
+    <!-- injected by JS -->
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  { id: 0, name: 'Renewal reason',    pageTitle: 'Renewal reason'    },
+  { id: 1, name: 'Contract details',  pageTitle: 'Contract details'  },
+  { id: 2, name: 'Select products',   pageTitle: 'Select products'   },
+  { id: 3, name: 'Additional info',   pageTitle: 'Additional information' },
+  { id: 4, name: 'Upload documents',  pageTitle: 'Upload documents'  },
+];
+
+let currentStep = 0;
+let activePanel = 'details';
+
+// ── Breakpoint toggle ──
+function setBreakpoint(bp, btn) {
+  const vp = document.getElementById('viewport');
+  vp.className = 'viewport' + (bp === 'full' ? '' : ' ' + bp);
+  document.querySelectorAll('.bp-bar .bp-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Step navigation ──
+function goToStep(n) {
+  currentStep = n;
+  render();
+}
+function nextStep() {
+  if (currentStep < STEPS.length - 1) { currentStep++; render(); }
+}
+function prevStep() {
+  if (currentStep > 0) { currentStep--; render(); }
+}
+
+// ── Bottom sheet ──
+function openBottomSheet() {
+  document.getElementById('sheetOverlay').classList.add('open');
+  document.getElementById('bottomSheet').classList.add('open');
+  renderSheetSteps();
+}
+function closeBottomSheet() {
+  document.getElementById('sheetOverlay').classList.remove('open');
+  document.getElementById('bottomSheet').classList.remove('open');
+}
+
+// ── Panel tabs ──
+function switchPanelTab(tab, el) {
+  activePanel = tab;
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderPanel();
+}
+
+// ── Render ──
+function render() {
+  renderSidebar();
+  renderStepStrip();
+  renderForm();
+  renderPanel();
+  renderFooter();
+}
+
+function renderSidebar() {
+  const el = document.getElementById('sidebarNav');
+  el.innerHTML = STEPS.map((s, i) => {
+    const cls = i === currentStep ? 'active' : i < currentStep ? 'done' : '';
+    return `<div class="sidebar-nav-item ${cls}" onclick="goToStep(${i})">
+      <span class="step-indicator"></span>
+      ${s.name}
+    </div>`;
+  }).join('');
+}
+
+function renderSheetSteps() {
+  const el = document.getElementById('sheetSteps');
+  el.innerHTML = STEPS.map((s, i) => {
+    const cls = i === currentStep ? 'active' : i < currentStep ? 'done' : '';
+    const icon = i < currentStep
+      ? `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>`
+      : (i + 1);
+    return `<div class="sheet-step-item ${cls}" onclick="goToStep(${i}); closeBottomSheet();">
+      <div class="sheet-step-indicator">${icon}</div>
+      <span class="sheet-step-name">${s.name}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderStepStrip() {
+  const s = STEPS[currentStep];
+  document.getElementById('stepStripLabel').textContent = s.pageTitle;
+  document.getElementById('stepStripCount').textContent = `${currentStep + 1} of ${STEPS.length}`;
+  document.getElementById('stepProgressFill').style.width = `${((currentStep + 1) / STEPS.length) * 100}%`;
+  const backBtn = document.getElementById('backBtn');
+  backBtn.style.visibility = currentStep === 0 ? 'hidden' : 'visible';
+}
+
+function renderForm() {
+  const el = document.getElementById('formPane');
+  const s = STEPS[currentStep];
+
+  const forms = {
+    0: `
+      <div class="section-accordion">
+        <div class="section-accordion-header" onclick="toggleAccordion(this)">
+          Contacts
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="section-accordion">
+        <div class="section-accordion-header" onclick="toggleAccordion(this)">
+          Request details
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="section-accordion-body">
+          <div class="form-section-title">Renewal reason</div>
+          <div class="form-section-sub">Section 1 <span style="color:var(--text-tertiary)">· Section description</span></div>
+
+          <div class="form-group">
+            <label class="form-label">Choose the contract you want to renew. <span class="required-star">*</span></label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <input class="form-input with-icon" type="text" placeholder="Search contracts">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">What is the desired outcome for this renewal? <span class="required-star">*</span></label>
+            <div class="radio-group">
+              <label class="radio-item"><input type="radio" name="outcome" value="downgrade"> Downgrade</label>
+              <label class="radio-item"><input type="radio" name="outcome" value="flat"> Flat (no change)</label>
+              <label class="radio-item"><input type="radio" name="outcome" value="upgrade" checked> Upgrade</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Why do you want to upgrade? <span class="required-star">*</span></label>
+            <textarea class="form-textarea" placeholder="E.g., need more features (or premium features), need more capacity, team growth, require different products/line items..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Do you personally use this software?</label>
+            <div class="radio-group">
+              <label class="radio-item"><input type="radio" name="personal" value="yes"> Yes</label>
+              <label class="radio-item"><input type="radio" name="personal" value="no"> No</label>
+            </div>
+          </div>
+        </div>
+      </div>`,
+
+    1: `
+      <div class="section-accordion">
+        <div class="section-accordion-header" onclick="toggleAccordion(this)">
+          Contract details
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="section-accordion-body">
+          <div class="form-section-title">Contract details</div>
+          <div class="form-section-sub">Provide contract specifics</div>
+          <div class="form-group">
+            <label class="form-label">Contract start date <span class="required-star">*</span></label>
+            <input class="form-input" type="date" value="2026-04-01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contract end date <span class="required-star">*</span></label>
+            <input class="form-input" type="date" value="2027-03-31">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contract value ($) <span class="required-star">*</span></label>
+            <input class="form-input" type="number" placeholder="0.00" value="150000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Payment terms</label>
+            <select class="form-input" style="cursor:pointer">
+              <option>Annual</option>
+              <option>Quarterly</option>
+              <option>Monthly</option>
+            </select>
+          </div>
+        </div>
+      </div>`,
+
+    2: `
+      <div class="section-accordion">
+        <div class="section-accordion-header" onclick="toggleAccordion(this)">
+          Select products
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="section-accordion-body">
+          <div class="form-section-title">Select products</div>
+          <div class="form-section-sub">Choose the products you are renewing</div>
+          <div class="form-group">
+            <label class="form-label">Search products</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <input class="form-input with-icon" type="text" placeholder="Search products">
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:8px;">
+            ${['Enterprise CRM License — $75,000', 'Implementation & Training — $75,000', 'Premium Support — $12,000'].map((p,i) => `
+              <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:${i<2?'1px solid var(--border)':'none'};transition:background 0.1s" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background=''">
+                <input type="checkbox" ${i<2?'checked':''} style="accent-color:var(--purple);width:14px;height:14px">
+                ${p}
+              </label>`).join('')}
+          </div>
+        </div>
+      </div>`,
+
+    3: `
+      <div class="section-accordion">
+        <div class="section-accordion-header" onclick="toggleAccordion(this)">
+          Additional information
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="section-accordion-body">
+          <div class="form-section-title">Additional information</div>
+          <div class="form-section-sub">Supporting context for approvers</div>
+          <div class="form-group">
+            <label class="form-label">Business justification <span class="required-star">*</span></label>
+            <textarea class="form-textarea" style="min-height:90px">"Need CRM to support sales growth and improve customer relationships"</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stakeholders informed</label>
+            <div class="radio-group">
+              <label class="radio-item"><input type="radio" name="stake" value="yes" checked> Yes</label>
+              <label class="radio-item"><input type="radio" name="stake" value="no"> No</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Additional notes</label>
+            <textarea class="form-textarea" placeholder="Any other context..."></textarea>
+          </div>
+        </div>
+      </div>`,
+
+    4: `
+      <div class="section-accordion">
+        <div class="section-accordion-header" onclick="toggleAccordion(this)">
+          Upload documents
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transition:transform 0.2s;transform:rotate(180deg)"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="section-accordion-body">
+          <div class="form-section-title">Upload documents</div>
+          <div class="form-section-sub">Attach supporting documents</div>
+          <div style="border:2px dashed var(--border);border-radius:8px;padding:32px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--purple)';this.style.background='var(--purple-dim)'" onmouseout="this.style.borderColor='var(--border)';this.style.background=''">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="margin:0 auto 8px;color:var(--text-tertiary)"><path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div style="font-size:13px;color:var(--text-secondary)">Drop files here or <span style="color:var(--purple);cursor:pointer">browse</span></div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">PDF, DOC, XLS up to 10MB</div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:6px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M9 2H4C3.45 2 3 2.45 3 3V13C3 13.55 3.45 14 4 14H12C12.55 14 13 13.55 13 13V6L9 2Z" stroke="var(--text-secondary)" stroke-width="1.5"/><path d="M9 2V6H13" stroke="var(--text-secondary)" stroke-width="1.5"/></svg>
+              <div>
+                <div style="font-size:13px;color:var(--text-primary)">CRM_Contract_2026.pdf</div>
+                <div style="font-size:11px;color:var(--text-tertiary)">2.4 MB</div>
+              </div>
+            </div>
+            <button class="icon-btn" style="color:var(--text-tertiary)">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3L13 13M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`
+  };
+
+  el.innerHTML = forms[currentStep] || forms[0];
+}
+
+function renderPanel() {
+  const el = document.getElementById('panelContent');
+  if (activePanel === 'comments') {
+    el.innerHTML = `
+      <div style="text-align:center;padding:40px 0">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="margin:0 auto 8px;color:var(--text-tertiary)"><path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="font-size:13px;color:var(--text-tertiary)">No comments yet</div>
+      </div>
+      <div style="margin-top:8px">
+        <textarea class="form-textarea" placeholder="Add a comment…" style="min-height:60px;resize:none"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button class="btn btn-primary" style="height:28px;font-size:12px">Post</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="ai-card">
+      <div class="ai-card-header">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5V8L10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Recommend Request
+      </div>
+      <div class="ai-card-body">Request is within budget with clear business justification. Standard approval path recommended.</div>
+      <div class="ai-card-footer">
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5L11 5.5L8.5 8L9 11.5L6 9.5L3 11.5L3.5 8L1 5.5L4.5 4.5L6 1Z" fill="currentColor"/></svg>
+        Powered by Vertice AI
+      </div>
+    </div>
+
+    <div class="meta-row">
+      <div class="meta-row-label">Assignee</div>
+      <div class="meta-row-value">
+        <div class="meta-avatar">AC</div>
+        Alex Chen (You)
+      </div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-row-label">Cost Center</div>
+      <div class="meta-row-value">CC-DEMO-001 <span style="color:var(--text-tertiary);font-size:12px">{team.department}</span></div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-row-label">Budget</div>
+      <div class="meta-row-value">
+        $92,000
+        <span class="budget-badge">
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5L4.5 7.5L8 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Within budget
+        </span>
+      </div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-row-label">Your Office</div>
+      <div class="meta-row-value">London</div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-row-label">Supplier known</div>
+      <div class="meta-row-value">Apple</div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-row-label">Business justification</div>
+      <div class="meta-row-value" style="font-style:italic">"Need CRM to support sales growth and improve customer relationships"</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="line-items-section">
+      <div class="line-items-header">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 6H11M5 9H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Line items (2)
+      </div>
+      <div class="line-item">
+        <div>
+          <div class="line-item-name">Enterprise CRM License</div>
+          <div class="line-item-type">Software</div>
+        </div>
+        <div class="line-item-amount">$75,000</div>
+      </div>
+      <div class="line-item">
+        <div>
+          <div class="line-item-name">Implementation & Training</div>
+          <div class="line-item-type">Services</div>
+        </div>
+        <div class="line-item-amount">$75,000</div>
+      </div>
+    </div>`;
+}
+
+function renderFooter() {
+  const el = document.getElementById('modalFooter');
+  const isLast = currentStep === STEPS.length - 1;
+  if (isLast) {
+    el.innerHTML = `
+      <button class="btn btn-ghost" onclick="prevStep()">Back</button>
+      <button class="btn btn-danger" onclick="alert('Declined')">Decline</button>
+      <button class="btn btn-primary" onclick="alert('Approved!')">Approve</button>`;
+  } else {
+    el.innerHTML = `
+      ${currentStep > 0 ? '<button class="btn btn-ghost" onclick="prevStep()">Back</button>' : ''}
+      <button class="btn btn-next" onclick="nextStep()">Next <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
+  }
+}
+
+function toggleAccordion(header) {
+  const body = header.nextElementSibling;
+  const icon = header.querySelector('svg');
+  if (!body) return;
+  if (body.style.display === 'none') {
+    body.style.display = '';
+    icon.style.transform = 'rotate(180deg)';
+  } else {
+    body.style.display = 'none';
+    icon.style.transform = 'rotate(0deg)';
+  }
+}
+
+// Init
+render();
+</script>
+</body>
+</html>

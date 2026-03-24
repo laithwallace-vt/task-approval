@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Task Shell v3 — Slot Model + Layout Modes</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f1f5;
+  --surface: #ffffff;
+  --slot-1: #5b21b6; --slot-1-bg: rgba(91,33,182,0.07); --slot-1-bd: rgba(91,33,182,0.22);
+  --slot-2: #0369a1; --slot-2-bg: rgba(3,105,161,0.07); --slot-2-bd: rgba(3,105,161,0.22);
+  --slot-3: #0f766e; --slot-3-bg: rgba(15,118,110,0.07); --slot-3-bd: rgba(15,118,110,0.22);
+  --slot-4: #b45309; --slot-4-bg: rgba(180,83,9,0.07); --slot-4-bd: rgba(180,83,9,0.22);
+  --slot-5: #be185d; --slot-5-bg: rgba(190,24,93,0.07); --slot-5-bd: rgba(190,24,93,0.22);
+  --cond: #6b7280; --cond-bg: rgba(107,114,128,0.06); --cond-bd: rgba(107,114,128,0.18);
+  --green: #15803d; --green-bg: rgba(21,128,61,0.07); --green-bd: rgba(21,128,61,0.2);
+  --text-1: rgba(10,15,30,0.90); --text-2: rgba(10,15,30,0.55); --text-3: rgba(10,15,30,0.35);
+  --r: 6px; --r-lg: 10px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Geist', system-ui, sans-serif; background: var(--bg); color: var(--text-1); font-size: 13px; -webkit-font-smoothing: antialiased; padding: 40px 32px 80px; min-height: 100vh; }
+
+/* ── Page head ── */
+.page-head { max-width: 1200px; margin: 0 auto 8px; }
+.page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text-3); line-height: 1.5; }
+.version-pill { display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; border-radius: 4px; background: var(--slot-1-bg); border: 1px solid var(--slot-1-bd); color: var(--slot-1); font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 600; margin-bottom: 16px; }
+
+/* ── Section headings ── */
+.section-title { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; max-width: 1200px; margin: 40px auto 14px; }
+.section-title:first-of-type { margin-top: 0; }
+
+/* ── Legend ── */
+.legend { max-width: 1200px; margin: 0 auto 32px; display: flex; flex-wrap: wrap; gap: 6px; }
+.leg { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 8px; border-radius: 13px; font-size: 11px; font-weight: 500; border: 1px solid; white-space: nowrap; }
+.leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Shared card ── */
+.card { background: var(--surface); border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 1px 12px rgba(0,0,0,0.05); overflow: hidden; }
+.card-head { padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.07); background: #f9fafb; display: flex; align-items: center; gap: 8px; }
+.card-head-title { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.07em; }
+.mono { font-family: 'Geist Mono', monospace; }
+.slot-pill { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 8px; border-radius: 4px; font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 600; border: 1px solid; white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 4px; font-family: 'Geist Mono', monospace; font-size: 9px; font-weight: 500; border: 1px solid; white-space: nowrap; }
+.tag-cond { background: var(--cond-bg); border-color: var(--cond-bd); color: var(--cond); }
+.tag-new { background: var(--slot-5-bg); border-color: var(--slot-5-bd); color: var(--slot-5); }
+.tag-fixed { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+
+/* ─────────────────────────────────────────
+   SECTION 1 — Shell wireframe (4 slots)
+───────────────────────────────────────── */
+.shell-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+
+.wf { background: var(--surface); border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 2px 24px rgba(0,0,0,0.07); overflow: hidden; }
+.wf-slot { position: relative; border-bottom: 1px solid rgba(0,0,0,0.07); }
+.wf-slot:last-child { border-bottom: none; }
+.wf-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.wf-inner { padding: 12px 14px 12px 20px; }
+.wf-title { font-size: 12px; font-weight: 600; color: var(--text-1); margin-bottom: 2px; }
+.wf-desc { font-size: 11px; color: var(--text-3); line-height: 1.5; margin-bottom: 8px; }
+.mock-row { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: var(--r); background: #f8f9fb; border: 1px solid rgba(0,0,0,0.06); margin-bottom: 5px; min-height: 32px; flex-wrap: wrap; }
+.mock-chip { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 4px; font-size: 10px; font-weight: 500; border: 1px solid; white-space: nowrap; flex-shrink: 0; }
+.mock-spacer { flex: 1; }
+.body-panel-row { display: flex; border-bottom: 1px solid rgba(0,0,0,0.07); min-height: 200px; }
+.body-col { flex: 1; padding: 12px 14px 12px 20px; border-right: 1px solid rgba(0,0,0,0.07); position: relative; }
+.panel-col { width: 160px; flex-shrink: 0; padding: 10px 12px 10px 16px; background: #fafafa; position: relative; }
+.panel-tab-row { display: flex; gap: 4px; margin-bottom: 8px; }
+.panel-tab { width: 26px; height: 26px; border-radius: var(--r); border: 1px solid rgba(0,0,0,0.08); background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-3); flex-shrink: 0; }
+.panel-tab.active { background: var(--slot-3-bg); border-color: var(--slot-3-bd); color: var(--slot-3); }
+.panel-line { height: 6px; border-radius: 3px; background: rgba(0,0,0,0.07); margin-bottom: 6px; }
+.zone-block { border-radius: var(--r); border: 1px solid rgba(0,0,0,0.07); background: #f8f9fb; padding: 7px 9px; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+.zone-num { width: 16px; height: 16px; border-radius: 3px; background: var(--slot-2-bg); border: 1px solid var(--slot-2-bd); color: var(--slot-2); font-family: 'Geist Mono', monospace; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.zone-label { font-size: 10px; color: var(--text-2); font-family: 'Geist Mono', monospace; flex: 1; }
+.zone-type { font-size: 9px; color: var(--text-3); font-family: 'Geist Mono', monospace; }
+
+/* Info sidebar */
+.info-col { display: flex; flex-direction: column; gap: 12px; }
+.info-card { background: var(--surface); border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); overflow: hidden; }
+.info-head { padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.07); font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; background: #f9fafb; }
+.info-body { padding: 10px 12px; }
+.rule-row { display: flex; gap: 6px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 11px; line-height: 1.5; }
+.rule-row:last-child { border-bottom: none; padding-bottom: 0; }
+.rule-icon { font-size: 12px; flex-shrink: 0; }
+.rule-text { color: var(--text-2); }
+.rule-text strong { color: var(--text-1); font-weight: 500; }
+.prop-row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 11px; }
+.prop-row:last-child { border-bottom: none; }
+.prop-key { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--text-1); }
+.prop-val { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--text-3); white-space: nowrap; }
+.section-arr { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+.section-item { display: flex; align-items: center; gap: 3px; padding: 3px 6px; border-radius: 4px; font-family: 'Geist Mono', monospace; font-size: 10px; border: 1px solid; }
+.section-idx { width: 13px; height: 13px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 600; }
+
+/* ─────────────────────────────────────────
+   SECTION 2 — Layout modes
+───────────────────────────────────────── */
+.modes-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+
+.mode-card { background: var(--surface); border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); overflow: hidden; }
+.mode-head { padding: 10px 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.07); }
+.mode-archetype { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+.mode-name { font-size: 13px; font-weight: 600; color: var(--text-1); letter-spacing: -0.01em; margin-bottom: 4px; }
+.mode-code { font-family: 'Geist Mono', monospace; font-size: 9px; color: var(--text-3); background: #f3f4f6; padding: 2px 5px; border-radius: 3px; display: inline-block; margin-bottom: 4px; }
+.mode-desc { font-size: 11px; color: var(--text-2); line-height: 1.45; }
+.mode-body { padding: 10px 12px; }
+
+/* Mini wireframes inside mode cards */
+.mini-wf { border-radius: 6px; border: 1px solid rgba(0,0,0,0.09); background: #fafafa; overflow: hidden; margin-bottom: 10px; }
+.mini-header { height: 22px; background: #f0f0f3; border-bottom: 1px solid rgba(0,0,0,0.07); display: flex; align-items: center; padding: 0 8px; gap: 4px; }
+.mini-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,0.15); }
+.mini-title-bar { flex: 1; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.12); }
+.mini-content { display: flex; min-height: 80px; }
+.mini-left { flex: 1; padding: 7px; border-right: 1px solid rgba(0,0,0,0.07); }
+.mini-right { width: 44px; padding: 7px; background: #f6f6f8; }
+.mini-panel-only { flex: 1; padding: 7px; }
+.mini-block { height: 8px; border-radius: 3px; background: rgba(0,0,0,0.08); margin-bottom: 5px; }
+.mini-block-sm { height: 5px; border-radius: 2px; background: rgba(0,0,0,0.06); margin-bottom: 4px; }
+.mini-block.accent { background: rgba(91,33,182,0.2); }
+.mini-block.accent-blue { background: rgba(3,105,161,0.2); }
+.mini-block.accent-green { background: rgba(21,128,61,0.18); }
+.mini-hero { height: 32px; border-radius: 5px; background: rgba(91,33,182,0.1); border: 1px solid rgba(91,33,182,0.15); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--slot-1); font-weight: 600; }
+.mini-split { display: flex; gap: 4px; margin-bottom: 5px; }
+.mini-split-a { flex: 1; height: 28px; border-radius: 4px; background: rgba(3,105,161,0.08); border: 1px solid rgba(3,105,161,0.15); }
+.mini-split-b { flex: 1; height: 28px; border-radius: 4px; background: rgba(180,83,9,0.07); border: 1px solid rgba(180,83,9,0.15); }
+.mini-pdf { flex: 1; background: rgba(0,0,0,0.04); border-right: 1px solid rgba(0,0,0,0.07); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text-3); padding: 6px; }
+.mini-form { flex: 1; padding: 6px; }
+.mini-step { display: flex; gap: 5px; min-height: 80px; }
+.mini-steps-nav { width: 36px; padding: 6px; border-right: 1px solid rgba(0,0,0,0.07); background: #f6f6f8; }
+.mini-step-item { height: 7px; border-radius: 3px; background: rgba(0,0,0,0.07); margin-bottom: 4px; }
+.mini-step-item.done { background: var(--green-bg); border: 1px solid var(--green-bd); }
+.mini-step-item.active { background: rgba(91,33,182,0.2); }
+.mini-pulse-center { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; padding: 10px; }
+.mini-pulse-icon { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(180,83,9,0.3); background: rgba(180,83,9,0.08); display: flex; align-items: center; justify-content: center; font-size: 11px; }
+.mini-pulse-text { font-size: 8px; color: var(--text-3); text-align: center; }
+.mini-footer { height: 24px; background: #f7f7f9; border-top: 1px solid rgba(0,0,0,0.07); display: flex; align-items: center; justify-content: flex-end; padding: 0 7px; gap: 4px; }
+.mini-btn { height: 12px; width: 28px; border-radius: 3px; }
+.mini-btn-primary { background: rgba(91,33,182,0.7); }
+.mini-btn-ghost { background: rgba(0,0,0,0.1); }
+.mini-btn-red { background: rgba(185,28,28,0.5); }
+.mini-no-footer { height: 10px; background: #f7f7f9; border-top: 1px solid rgba(0,0,0,0.07); }
+
+.mode-props { display: flex; flex-direction: column; gap: 4px; }
+.mode-prop-row { display: flex; align-items: baseline; gap: 6px; font-size: 10px; }
+.mode-prop-k { font-family: 'Geist Mono', monospace; color: var(--text-3); width: 80px; flex-shrink: 0; }
+.mode-prop-v { font-family: 'Geist Mono', monospace; color: var(--text-1); }
+
+/* ─────────────────────────────────────────
+   SECTION 3 — Panel states
+───────────────────────────────────────── */
+.panel-states-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+.ps-card { background: var(--surface); border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); overflow: hidden; }
+.ps-head { padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,0.07); background: #f9fafb; }
+.ps-name { font-size: 11px; font-weight: 600; color: var(--text-1); margin-bottom: 2px; }
+.ps-desc { font-size: 10px; color: var(--text-3); }
+.ps-body { padding: 10px 12px; }
+.ps-mock { border-radius: 6px; border: 1px solid rgba(0,0,0,0.07); background: #fafafa; padding: 10px; min-height: 100px; }
+.ps-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px; gap: 5px; }
+.ps-empty-icon { font-size: 20px; opacity: 0.3; }
+.ps-empty-text { font-size: 10px; color: var(--text-3); }
+.ps-comment { display: flex; gap: 6px; margin-bottom: 8px; }
+.ps-avatar { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
+.ps-comment-body { flex: 1; }
+.ps-comment-name { font-size: 9px; font-weight: 600; color: var(--text-1); margin-bottom: 2px; }
+.ps-comment-text { font-size: 10px; color: var(--text-2); line-height: 1.4; }
+.ps-kv { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 10px; }
+.ps-kv:last-child { border-bottom: none; }
+.ps-kv-k { color: var(--text-3); }
+.ps-kv-v { color: var(--text-1); font-weight: 500; }
+.ps-ai-banner { background: rgba(91,33,182,0.06); border: 1px solid rgba(91,33,182,0.15); border-radius: 5px; padding: 7px 8px; margin-bottom: 8px; }
+.ps-ai-label { font-size: 9px; font-weight: 600; color: var(--slot-1); margin-bottom: 2px; display: flex; align-items: center; gap: 3px; }
+.ps-ai-text { font-size: 10px; color: var(--text-2); line-height: 1.4; }
+
+/* ─────────────────────────────────────────
+   SECTION 4 — Breakpoints
+───────────────────────────────────────── */
+.breakpoints-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 14px; align-items: start; }
+
+.bp-card { background: var(--surface); border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); overflow: hidden; }
+.bp-head { padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,0.07); background: #f9fafb; display: flex; align-items: center; gap: 8px; }
+.bp-name { font-size: 12px; font-weight: 600; color: var(--text-1); }
+.bp-size { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--text-3); margin-left: auto; }
+.bp-body { padding: 12px; }
+.bp-wf { border-radius: 6px; border: 1px solid rgba(0,0,0,0.08); background: #fafafa; overflow: hidden; }
+.bp-header { height: 26px; background: #f0f0f3; border-bottom: 1px solid rgba(0,0,0,0.07); display: flex; align-items: center; padding: 0 10px; gap: 6px; }
+.bp-header-title { font-size: 10px; font-weight: 500; color: var(--text-1); flex: 1; }
+.bp-header-actions { display: flex; gap: 4px; }
+.bp-icon-btn { width: 16px; height: 16px; border-radius: 3px; background: rgba(0,0,0,0.08); }
+.bp-meta { padding: 6px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; gap: 12px; background: #f7f7f9; }
+.bp-meta-item { font-size: 9px; color: var(--text-3); display: flex; align-items: center; gap: 4px; }
+.bp-meta-dot { width: 14px; height: 14px; border-radius: 50%; background: rgba(91,33,182,0.15); flex-shrink: 0; }
+.bp-content { display: flex; }
+.bp-body-area { flex: 1; padding: 10px; }
+.bp-panel-area { width: 140px; background: #f6f6f8; border-left: 1px solid rgba(0,0,0,0.07); padding: 8px; }
+.bp-panel-hidden { display: flex; align-items: center; justify-content: center; padding: 16px 8px; font-size: 9px; color: var(--text-3); text-align: center; border: 1px dashed rgba(0,0,0,0.1); border-radius: 5px; line-height: 1.4; }
+.bp-footer { height: 28px; border-top: 1px solid rgba(0,0,0,0.07); background: #f7f7f9; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; gap: 6px; }
+.bp-btn { height: 14px; border-radius: 3px; }
+.bp-btn-primary { background: rgba(91,33,182,0.7); width: 52px; }
+.bp-btn-ghost { background: rgba(0,0,0,0.1); width: 36px; }
+
+/* Mobile chrome */
+.bp-mobile-chrome { border-radius: 12px; border: 2px solid rgba(0,0,0,0.12); overflow: hidden; background: var(--surface); max-width: 220px; margin: 0 auto; }
+.bp-mobile-status { height: 18px; background: #f0f0f3; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
+.bp-mobile-status-text { font-size: 8px; color: var(--text-3); }
+.bp-mobile-modal { border-radius: 10px 10px 0 0; overflow: hidden; margin-top: 4px; }
+.bp-mobile-header { padding: 8px 10px; background: #f8f9fb; border-bottom: 1px solid rgba(0,0,0,0.07); }
+.bp-mobile-title { font-size: 11px; font-weight: 600; color: var(--text-1); margin-bottom: 3px; }
+.bp-mobile-meta { font-size: 9px; color: var(--text-3); }
+.bp-mobile-tabs { display: flex; border-bottom: 1px solid rgba(0,0,0,0.07); }
+.bp-mobile-tab { flex: 1; padding: 6px 0; font-size: 9px; font-weight: 500; text-align: center; color: var(--text-3); }
+.bp-mobile-tab.active { color: var(--slot-1); border-bottom: 2px solid var(--slot-1); }
+.bp-mobile-content { padding: 10px; }
+.bp-mobile-footer { padding: 8px 10px; background: #f7f7f9; border-top: 1px solid rgba(0,0,0,0.07); }
+.bp-mobile-btn { width: 100%; height: 32px; background: #7C5CFC; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; margin-bottom: 5px; }
+.bp-mobile-btn-ghost { width: 100%; height: 28px; background: rgba(0,0,0,0.05); border-radius: 5px; border: 1px solid rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-2); }
+
+/* ─────────────────────────────────────────
+   SECTION 5 — Notification channels (NEW)
+───────────────────────────────────────── */
+.channels-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+.ch-card { background: var(--surface); border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); overflow: hidden; }
+.ch-head { padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,0.07); display: flex; align-items: center; gap: 8px; }
+.ch-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.ch-info { flex: 1; }
+.ch-name { font-size: 12px; font-weight: 600; color: var(--text-1); }
+.ch-status { font-size: 10px; }
+.ch-body { padding: 10px 14px; }
+.ch-issue-row { display: flex; gap: 6px; margin-bottom: 7px; align-items: flex-start; }
+.ch-issue-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.ch-issue-dot.p0 { background: #dc2626; }
+.ch-issue-dot.p1 { background: #f59e0b; }
+.ch-issue-text { font-size: 11px; color: var(--text-2); line-height: 1.4; flex: 1; }
+.ch-solution { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 10px; margin-top: 8px; }
+.ch-solution-title { font-size: 10px; font-weight: 600; color: #15803d; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+.ch-solution-text { font-size: 10px; color: #166534; line-height: 1.4; }
+
+/* Decision matrix */
+.matrix-grid { max-width: 1200px; margin: 0 auto; }
+.matrix-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 10px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); }
+.matrix-table th { padding: 9px 14px; font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; background: #f9fafb; border-bottom: 1px solid rgba(0,0,0,0.08); text-align: left; }
+.matrix-table td { padding: 9px 14px; font-size: 11px; color: var(--text-2); border-bottom: 1px solid rgba(0,0,0,0.05); vertical-align: top; }
+.matrix-table tr:last-child td { border-bottom: none; }
+.matrix-table td:first-child { color: var(--text-1); font-weight: 500; }
+.archetype-badge { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.ab-rat { background: var(--slot-1-bg); color: var(--slot-1); border: 1px solid var(--slot-1-bd); }
+.ab-war { background: var(--slot-2-bg); color: var(--slot-2); border: 1px solid var(--slot-2-bd); }
+.ab-inp { background: var(--slot-3-bg); color: var(--slot-3); border: 1px solid var(--slot-3-bd); }
+.ab-pul { background: var(--slot-4-bg); color: var(--slot-4); border: 1px solid var(--slot-4-bd); }
+.check { color: #15803d; font-weight: 600; }
+.cross { color: #dc2626; font-weight: 600; }
+.dot-opt { color: var(--text-3); }
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-head">
+  <div class="version-pill">v3.0 — DES-655 + DES-627</div>
+  <div class="page-title">Task Shell — Slot Model & Layout Modes</div>
+  <div class="page-sub">The shell has 4 fixed slots. All variation lives in the task type definition object. The shell HTML never changes.</div>
+</div>
+
+<div class="legend">
+  <div class="leg" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);color:var(--slot-1);"><div class="leg-dot" style="background:var(--slot-1);"></div>Slot 1 · Header</div>
+  <div class="leg" style="background:var(--slot-2-bg);border-color:var(--slot-2-bd);color:var(--slot-2);"><div class="leg-dot" style="background:var(--slot-2);"></div>Slot 2 · Body</div>
+  <div class="leg" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="leg-dot" style="background:var(--slot-3);"></div>Slot 3 · Panel</div>
+  <div class="leg" style="background:var(--slot-4-bg);border-color:var(--slot-4-bd);color:var(--slot-4);"><div class="leg-dot" style="background:var(--slot-4);"></div>Slot 4 · Actions</div>
+  <div class="leg" style="background:var(--cond-bg);border-color:var(--cond-bd);color:var(--cond);"><div class="leg-dot" style="background:var(--cond);"></div>Conditional sub-slot</div>
+  <div class="leg" style="background:var(--slot-5-bg);border-color:var(--slot-5-bd);color:var(--slot-5);"><div class="leg-dot" style="background:var(--slot-5);"></div>New in v3</div>
+</div>
+
+<!-- ── SECTION 1: Shell Wireframe ── -->
+<div class="section-title">01 · Shell Structure — 4 fixed slots</div>
+<div class="shell-grid">
+
+  <div class="wf">
+    <!-- SLOT 1a: Header chrome -->
+    <div class="wf-slot">
+      <div class="wf-accent" style="background:var(--slot-1);"></div>
+      <div class="wf-inner">
+        <div class="slot-pill" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);color:var(--slot-1);">SLOT 1a · header-chrome · always present</div>
+        <div class="wf-title">Header — Chrome strip</div>
+        <div class="wf-desc">Task type label · Entity breadcrumb + link · Status pill · Panel toggle icon · Overflow menu · Close ×</div>
+        <div class="mock-row">
+          <div class="mock-chip" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);color:var(--slot-1);">Manager Approval</div>
+          <div class="mock-chip" style="background:#f3f4f6;border-color:rgba(0,0,0,0.1);color:var(--text-2);">⚡ Google New Purchase ↗</div>
+          <div class="mock-spacer"></div>
+          <div class="mock-chip" style="background:#f3f4f6;border-color:rgba(0,0,0,0.1);color:var(--text-2);">💬</div>
+          <div class="mock-chip" style="background:#f3f4f6;border-color:rgba(0,0,0,0.1);color:var(--text-2);">≡</div>
+          <div class="mock-chip" style="background:#f3f4f6;border-color:rgba(0,0,0,0.1);color:var(--text-2);">×</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLOT 1b: Meta strip (conditional) -->
+    <div class="wf-slot">
+      <div class="wf-accent" style="background:var(--slot-1);opacity:0.4;"></div>
+      <div class="wf-inner">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <div class="slot-pill" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);color:var(--slot-1);">SLOT 1b · header-meta</div>
+          <span class="tag tag-cond">conditional — task name, assignee, due date, description</span>
+        </div>
+        <div class="wf-title">Header — Meta strip</div>
+        <div class="wf-desc">Task name · Assignee (editable) · Due date · Description (optional task instructions)</div>
+        <div class="mock-row">
+          <div class="mock-chip" style="background:#f3f4f6;border-color:rgba(0,0,0,0.1);color:var(--text-2);">👤 Renata Benesova (You) ✏</div>
+          <div class="mock-chip" style="background:#f3f4f6;border-color:rgba(0,0,0,0.1);color:var(--text-2);">📅 Due Mar 29, 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLOT 2: Body + Panel (the complex split) -->
+    <div class="wf-slot">
+      <div class="body-panel-row">
+        <div class="body-col">
+          <div class="wf-accent" style="background:var(--slot-2);position:absolute;left:0;top:0;bottom:0;width:3px;"></div>
+          <div style="padding-left:6px;">
+            <div class="slot-pill" style="background:var(--slot-2-bg);border-color:var(--slot-2-bd);color:var(--slot-2);">SLOT 2 · body · always present</div>
+            <div class="wf-title" style="margin-top:6px;">Body</div>
+            <div class="wf-desc">Renders body_layout mode. Content is 100% owned by task type definition. Shell never inspects body content.</div>
+            <div class="zone-block">
+              <div class="zone-num" style="background:var(--slot-5-bg);border-color:var(--slot-5-bd);color:var(--slot-5);">≡</div>
+              <div class="zone-label">body_layout: "single_view" | "comparison_grid" | "split_source" | "stepped" | "status_hero"</div>
+            </div>
+            <div class="zone-block">
+              <div class="zone-num">0</div>
+              <div class="zone-label">panelSections[0] — first section (default open)</div>
+              <div class="zone-type">ai | details | comments | documents</div>
+            </div>
+            <div class="zone-block">
+              <div class="zone-num">1</div>
+              <div class="zone-label">panelSections[1] — second tab</div>
+              <div class="zone-type">ordered array</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-col">
+          <div class="wf-accent" style="background:var(--slot-3);position:absolute;left:0;top:0;bottom:0;width:3px;"></div>
+          <div style="padding-left:4px;">
+            <div class="slot-pill" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);margin-bottom:8px;">SLOT 3 · panel</div>
+            <div class="wf-title" style="margin-bottom:4px;">Panel</div>
+            <div class="wf-desc" style="font-size:10px;margin-bottom:8px;">Collapsible. [] = hidden.</div>
+            <div class="panel-tab-row">
+              <div class="panel-tab active">✦</div>
+              <div class="panel-tab">💬</div>
+              <div class="panel-tab">☰</div>
+            </div>
+            <div class="panel-line" style="width:90%;"></div>
+            <div class="panel-line" style="width:70%;"></div>
+            <div class="panel-line" style="width:80%;"></div>
+            <div class="panel-line" style="width:60%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLOT 4: Actions -->
+    <div class="wf-slot">
+      <div class="wf-accent" style="background:var(--slot-4);"></div>
+      <div class="wf-inner">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <div class="slot-pill" style="background:var(--slot-4-bg);border-color:var(--slot-4-bd);color:var(--slot-4);">SLOT 4 · actions-footer</div>
+          <span class="tag tag-new">actions_mode: task | wizard | passive</span>
+        </div>
+        <div class="wf-title">Actions footer</div>
+        <div class="wf-desc">Typed by role. Primary action always right-anchored. Destructive action always left-anchored. Wizard uses Back/Next.</div>
+        <div class="mock-row" style="justify-content:flex-end;">
+          <div class="mock-chip" style="background:#fef2f2;border-color:#fecaca;color:#dc2626;">Decline</div>
+          <div class="mock-spacer"></div>
+          <div class="mock-chip" style="background:rgba(91,33,182,0.9);border-color:rgba(91,33,182,0.5);color:white;">Approve</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info sidebar -->
+  <div class="info-col">
+    <div class="info-card">
+      <div class="info-head">Shell rules</div>
+      <div class="info-body">
+        <div class="rule-row"><span class="rule-icon">🔒</span><span class="rule-text"><strong>Shell HTML never changes</strong> between task types. All variation is in the definition object.</span></div>
+        <div class="rule-row"><span class="rule-icon">📋</span><span class="rule-text"><strong>Panel sections ordered array.</strong> panelSections[] — empty [] = no panel, no tabs.</span></div>
+        <div class="rule-row"><span class="rule-icon">↕</span><span class="rule-text"><strong>body_layout</strong> is declared by task type. Shell renders it but doesn't own its internal structure.</span></div>
+        <div class="rule-row"><span class="rule-icon">🎯</span><span class="rule-text"><strong>Buttons typed by role,</strong> not task type. Primary right, destructive left.</span></div>
+        <div class="rule-row"><span class="rule-icon">📱</span><span class="rule-text"><strong>Mobile: panel becomes a tab</strong> in the body area. Footer stacks vertically.</span></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-head">Panel section types</div>
+      <div class="info-body">
+        <div style="font-size:10px;color:var(--text-3);margin-bottom:6px;line-height:1.5;">Ordered array. First entry = default open tab. Empty = panel hidden entirely.</div>
+        <div class="section-arr">
+          <div class="section-item" style="background:var(--slot-1-bg);border-color:var(--slot-1-bd);color:var(--slot-1);"><div class="section-idx" style="background:var(--slot-1-bg);color:var(--slot-1);">✦</div>"ai"</div>
+          <div class="section-item" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="section-idx" style="background:var(--slot-3-bg);color:var(--slot-3);">☰</div>"details"</div>
+          <div class="section-item" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="section-idx" style="background:var(--slot-3-bg);color:var(--slot-3);">💬</div>"comments"</div>
+          <div class="section-item" style="background:var(--slot-3-bg);border-color:var(--slot-3-bd);color:var(--slot-3);"><div class="section-idx" style="background:var(--slot-3-bg);color:var(--slot-3);">📄</div>"documents"</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-head">actions_mode values (NEW v3)</div>
+      <div class="info-body">
+        <div class="prop-row"><div class="prop-key">"task"</div><div class="prop-val">Approve / Decline / Submit</div></div>
+        <div class="prop-row"><div class="prop-key">"wizard"</div><div class="prop-val">Back + Next (no submit)</div></div>
+        <div class="prop-row"><div class="prop-key">"passive"</div><div class="prop-val">Hidden (Pulse state)</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 2: Layout Modes ── -->
+<div class="section-title">02 · Body Layout Modes — 5 modes, all live inside Slot 2</div>
+<div class="modes-grid">
+
+  <!-- Ratification -->
+  <div class="mode-card">
+    <div class="mode-head">
+      <div class="mode-archetype">Archetype 1</div>
+      <div class="mode-name">Ratification</div>
+      <div class="mode-code">body_layout: "single_view"</div>
+      <div class="mode-desc">The 98% case. One truth to confirm. Speed is the only metric.</div>
+    </div>
+    <div class="mode-body">
+      <div class="mini-wf">
+        <div class="mini-header"><div class="mini-dot"></div><div class="mini-dot"></div><div class="mini-title-bar"></div></div>
+        <div class="mini-content">
+          <div class="mini-left">
+            <div class="mini-hero">Vendor Card</div>
+            <div class="mini-block-sm"></div>
+            <div class="mini-block-sm" style="width:60%"></div>
+            <div style="height:20px;border-radius:4px;background:rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.08);margin-top:6px;"></div>
+          </div>
+          <div class="mini-right">
+            <div class="mini-block-sm accent"></div>
+            <div class="mini-block-sm" style="width:80%"></div>
+            <div class="mini-block-sm"></div>
+          </div>
+        </div>
+        <div class="mini-footer">
+          <div class="mini-btn mini-btn-red" style="width:22px;"></div>
+          <div class="mini-btn mini-btn-primary"></div>
+        </div>
+      </div>
+      <div class="mode-props">
+        <div class="mode-prop-row"><div class="mode-prop-k">actions_mode</div><div class="mode-prop-v">"task"</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">panel default</div><div class="mode-prop-v">collapsed</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">left panel</div><div class="mode-prop-v">none</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">examples</div><div class="mode-prop-v">Manager Approval</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- War Room -->
+  <div class="mode-card">
+    <div class="mode-head">
+      <div class="mode-archetype">Archetype 2</div>
+      <div class="mode-name">War Room</div>
+      <div class="mode-code">body_layout: "comparison_grid"</div>
+      <div class="mode-desc">The 2% case. Multiple options. System highlights winner vs. loser.</div>
+    </div>
+    <div class="mode-body">
+      <div class="mini-wf">
+        <div class="mini-header"><div class="mini-dot"></div><div class="mini-dot"></div><div class="mini-title-bar"></div></div>
+        <div class="mini-content">
+          <div class="mini-left">
+            <div style="font-size:8px;color:var(--text-3);margin-bottom:4px;">Select final offer to proceed</div>
+            <div class="mini-split">
+              <div class="mini-split-a" style="position:relative;display:flex;align-items:center;justify-content:center;font-size:8px;color:#0369a1;font-weight:600;">1 yr</div>
+              <div class="mini-split-b" style="position:relative;display:flex;align-items:center;justify-content:center;font-size:8px;color:#b45309;font-weight:600;">2 yr</div>
+            </div>
+            <div class="mini-block-sm"></div>
+            <div class="mini-block-sm" style="width:70%"></div>
+          </div>
+        </div>
+        <div class="mini-footer">
+          <div class="mini-btn mini-btn-ghost"></div>
+          <div class="mini-btn mini-btn-primary"></div>
+        </div>
+      </div>
+      <div class="mode-props">
+        <div class="mode-prop-row"><div class="mode-prop-k">actions_mode</div><div class="mode-prop-v">"task"</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">panel default</div><div class="mode-prop-v">expanded</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">left panel</div><div class="mode-prop-v">none</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">examples</div><div class="mode-prop-v">Select Final Offer</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input: Split Source -->
+  <div class="mode-card">
+    <div class="mode-head">
+      <div class="mode-archetype">Archetype 3a</div>
+      <div class="mode-name">Input · Source</div>
+      <div class="mode-code">body_layout: "split_source"</div>
+      <div class="mode-desc">PDF or doc on left, AI-prefilled form on right. Rare. Specific to offer entry.</div>
+    </div>
+    <div class="mode-body">
+      <div class="mini-wf">
+        <div class="mini-header"><div class="mini-dot"></div><div class="mini-dot"></div><div class="mini-title-bar"></div></div>
+        <div class="mini-content" style="min-height:90px;">
+          <div class="mini-pdf">📄<br/>PDF</div>
+          <div class="mini-form">
+            <div class="mini-block-sm"></div>
+            <div class="mini-block-sm" style="width:80%"></div>
+            <div class="mini-block-sm"></div>
+            <div class="mini-block-sm" style="width:60%"></div>
+            <div class="mini-block-sm"></div>
+          </div>
+        </div>
+        <div class="mini-footer">
+          <div class="mini-btn mini-btn-primary"></div>
+        </div>
+      </div>
+      <div class="mode-props">
+        <div class="mode-prop-row"><div class="mode-prop-k">actions_mode</div><div class="mode-prop-v">"task"</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">panel default</div><div class="mode-prop-v">collapsed</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">left panel</div><div class="mode-prop-v">PDF viewer (body-internal)</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">examples</div><div class="mode-prop-v">SaaS Negotiated Offers</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input: Stepped -->
+  <div class="mode-card">
+    <div class="mode-head">
+      <div class="mode-archetype">Archetype 3b</div>
+      <div class="mode-name">Input · Stepped</div>
+      <div class="mode-code">body_layout: "stepped"</div>
+      <div class="mode-desc">Wizard with left-nav step progression. Multi-stage data collection.</div>
+    </div>
+    <div class="mode-body">
+      <div class="mini-wf">
+        <div class="mini-header"><div class="mini-dot"></div><div class="mini-dot"></div><div class="mini-title-bar"></div></div>
+        <div class="mini-content" style="min-height:90px;">
+          <div class="mini-step">
+            <div class="mini-steps-nav">
+              <div class="mini-step-item done"></div>
+              <div class="mini-step-item active"></div>
+              <div class="mini-step-item"></div>
+              <div class="mini-step-item"></div>
+              <div class="mini-step-item"></div>
+            </div>
+            <div style="flex:1;padding:6px;">
+              <div class="mini-block" style="width:90%;background:rgba(0,0,0,0.1);height:10px;margin-bottom:8px;"></div>
+              <div class="mini-block-sm"></div>
+              <div class="mini-block-sm" style="width:80%"></div>
+              <div class="mini-block-sm"></div>
+              <div class="mini-block-sm" style="width:70%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mini-footer">
+          <div class="mini-btn mini-btn-ghost"></div>
+          <div class="mini-btn mini-btn-primary"></div>
+        </div>
+      </div>
+      <div class="mode-props">
+        <div class="mode-prop-row"><div class="mode-prop-k">actions_mode</div><div class="mode-prop-v">"wizard"</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">panel default</div><div class="mode-prop-v">collapsed</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">left panel</div><div class="mode-prop-v">Step nav (body-internal)</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">examples</div><div class="mode-prop-v">Review Draft Contract</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pulse -->
+  <div class="mode-card">
+    <div class="mode-head">
+      <div class="mode-archetype">Archetype 4</div>
+      <div class="mode-name">Pulse</div>
+      <div class="mode-code">body_layout: "status_hero"</div>
+      <div class="mode-desc">System waiting on external blocker. Human language. Nudge or observe.</div>
+    </div>
+    <div class="mode-body">
+      <div class="mini-wf">
+        <div class="mini-header"><div class="mini-dot"></div><div class="mini-dot"></div><div class="mini-title-bar"></div></div>
+        <div class="mini-content" style="min-height:90px;">
+          <div class="mini-pulse-center">
+            <div class="mini-pulse-icon">⏳</div>
+            <div class="mini-pulse-text">Waiting for<br/>Legal to sign</div>
+            <div style="height:16px;width:60px;border-radius:3px;background:rgba(180,83,9,0.12);border:1px solid rgba(180,83,9,0.2);margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#b45309;">Remind</div>
+          </div>
+        </div>
+        <div class="mini-no-footer"></div>
+      </div>
+      <div class="mode-props">
+        <div class="mode-prop-row"><div class="mode-prop-k">actions_mode</div><div class="mode-prop-v">"passive"</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">panel default</div><div class="mode-prop-v">hidden</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">left panel</div><div class="mode-prop-v">none</div></div>
+        <div class="mode-prop-row"><div class="mode-prop-k">examples</div><div class="mode-prop-v">Ironclad / DocuSign sync</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── SECTION 3: Panel states ── -->
+<div class="section-title">03 · Panel States — Slot 3 variations</div>
+<div class="panel-states-grid">
+
+  <div class="ps-card">
+    <div class="ps-head">
+      <div class="ps-name">AI Recommendation · present</div>
+      <div class="ps-desc">panelSections[0] = "ai" — shown when Vertice AI has a recommendation</div>
+    </div>
+    <div class="ps-body">
+      <div class="ps-mock">
+        <div class="ps-ai-banner">
+          <div class="ps-ai-label">✦ Recommend Request</div>
+          <div class="ps-ai-text">Request is within budget with clear business justification. Standard approval path recommended.</div>
+        </div>
+        <div style="font-size:9px;color:var(--text-3);text-align:right;">Powered by Vertice AI</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ps-card">
+    <div class="ps-head">
+      <div class="ps-name">Comments · empty</div>
+      <div class="ps-desc">panelSections includes "comments" but no messages yet — show empty state, not blank space</div>
+    </div>
+    <div class="ps-body">
+      <div class="ps-mock">
+        <div class="ps-empty">
+          <div class="ps-empty-icon">💬</div>
+          <div class="ps-empty-text">Start a conversation</div>
+        </div>
+        <div style="height:28px;background:#f3f4f6;border-radius:5px;border:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;padding:0 8px;font-size:10px;color:var(--text-3);">Add a comment… ➤</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ps-card">
+    <div class="ps-head">
+      <div class="ps-name">Comments · populated</div>
+      <div class="ps-desc">Active thread. Panel should be expanded by default when messages exist.</div>
+    </div>
+    <div class="ps-body">
+      <div class="ps-mock">
+        <div class="ps-comment">
+          <div class="ps-avatar" style="background:rgba(91,33,182,0.15);"></div>
+          <div class="ps-comment-body">
+            <div class="ps-comment-name">Kristina W. · 6d ago</div>
+            <div class="ps-comment-text">Thank you for the negotiation details. I've booked a review.</div>
+          </div>
+        </div>
+        <div class="ps-comment">
+          <div class="ps-avatar" style="background:rgba(3,105,161,0.15);"></div>
+          <div class="ps-comment-body">
+            <div class="ps-comment-name">Olivia W. · 1d ago · Senior PM</div>
+            <div class="ps-comment-text">Hi Kristina, happy to discuss further.</div>
+          </div>
+        </div>
+        <div style="height:24px;background:#f3f4f6;border-radius:5px;border:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;padding:0 8px;font-size:10px;color:var(--text-3);">Add a comment… ➤</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ps-card">
+    <div class="ps-head">
+      <div class="ps-name">Details · populated</div>
+      <div class="ps-desc">panelSections includes "details" — assignee, cost centre, budget, office, supplier</div>
+    </div>
+    <div class="ps-body">
+      <div class="ps-mock">
+        <div class="ps-kv"><div class="ps-kv-k">Assignee</div><div class="ps-kv-v">Alex Chen (You)</div></div>
+        <div class="ps-kv"><div class="ps-kv-k">Cost Centre</div><div class="ps-kv-v">CC-DEMO-001</div></div>
+        <div class="ps-kv"><div class="ps-kv-k">Budget</div><div class="ps-kv-v">$92,000 ✓</div></div>
+        <div class="ps-kv"><div class="ps-kv-k">Office</div><div class="ps-kv-v">London</div></div>
+        <div class="ps-kv"><div class="ps-kv-k">Supplier</div><div class="ps-kv-v">Apple</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── SECTION 4: Breakpoints ── -->
+<div class="section-title">04 · Breakpoints — 3 required states per archetype</div>
+<div class="breakpoints-grid">
+
+  <!-- Desktop Large -->
+  <div class="bp-card">
+    <div class="bp-head">
+      <div class="bp-name">Desktop · Large</div>
+      <div class="bp-size">1280px+</div>
+    </div>
+    <div class="bp-body">
+      <div class="bp-wf">
+        <div class="bp-header">
+          <div class="bp-header-title">Manager Approval · ⚡ Google New Purchase ↗</div>
+          <div class="bp-header-actions">
+            <div class="bp-icon-btn"></div><div class="bp-icon-btn"></div><div class="bp-icon-btn"></div>
+          </div>
+        </div>
+        <div class="bp-meta">
+          <div class="bp-meta-item"><div class="bp-meta-dot"></div>Alex Chen (You)</div>
+          <div class="bp-meta-item">📅 Due Mar 29</div>
+        </div>
+        <div class="bp-content">
+          <div class="bp-body-area">
+            <div style="height:16px;border-radius:4px;background:rgba(0,0,0,0.07);margin-bottom:8px;"></div>
+            <div style="height:8px;border-radius:3px;background:rgba(0,0,0,0.05);margin-bottom:5px;width:70%;"></div>
+            <div style="height:8px;border-radius:3px;background:rgba(0,0,0,0.05);margin-bottom:5px;width:85%;"></div>
+            <div style="height:40px;border-radius:5px;border:1px solid rgba(0,0,0,0.08);background:#f8f9fb;margin-top:10px;"></div>
+          </div>
+          <div class="bp-panel-area">
+            <div style="font-size:9px;color:var(--slot-3);font-weight:600;margin-bottom:6px;">DETAILS</div>
+            <div style="height:5px;border-radius:2px;background:rgba(0,0,0,0.07);margin-bottom:4px;"></div>
+            <div style="height:5px;border-radius:2px;background:rgba(0,0,0,0.07);margin-bottom:4px;width:80%;"></div>
+            <div style="height:5px;border-radius:2px;background:rgba(0,0,0,0.07);margin-bottom:4px;"></div>
+          </div>
+        </div>
+        <div class="bp-footer">
+          <div class="bp-btn bp-btn-ghost"></div>
+          <div class="bp-btn bp-btn-primary"></div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-3);">Body + panel both visible. Panel default: open or collapsed based on task type.</div>
+    </div>
+  </div>
+
+  <!-- Desktop Small -->
+  <div class="bp-card">
+    <div class="bp-head">
+      <div class="bp-name">Desktop · Small</div>
+      <div class="bp-size">900–1280px</div>
+    </div>
+    <div class="bp-body">
+      <div class="bp-wf">
+        <div class="bp-header">
+          <div class="bp-header-title">Manager Approval · Google ↗</div>
+          <div class="bp-header-actions">
+            <div class="bp-icon-btn"></div><div class="bp-icon-btn" style="background:rgba(91,33,182,0.2);"></div><div class="bp-icon-btn"></div>
+          </div>
+        </div>
+        <div class="bp-meta">
+          <div class="bp-meta-item"><div class="bp-meta-dot"></div>Alex Chen</div>
+          <div class="bp-meta-item">📅 Mar 29</div>
+        </div>
+        <div class="bp-content">
+          <div class="bp-body-area" style="flex:1;">
+            <div style="height:14px;border-radius:4px;background:rgba(0,0,0,0.07);margin-bottom:7px;"></div>
+            <div style="height:7px;border-radius:3px;background:rgba(0,0,0,0.05);margin-bottom:5px;width:80%;"></div>
+            <div style="height:7px;border-radius:3px;background:rgba(0,0,0,0.05);margin-bottom:5px;"></div>
+            <div style="height:32px;border-radius:5px;border:1px solid rgba(0,0,0,0.08);background:#f8f9fb;margin-top:8px;"></div>
+          </div>
+          <div class="bp-panel-hidden">Panel icon in header → opens as overlay</div>
+        </div>
+        <div class="bp-footer">
+          <div class="bp-btn bp-btn-ghost"></div>
+          <div class="bp-btn bp-btn-primary"></div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-3);">Panel collapsed by default. 💬 header icon toggles it as a side overlay.</div>
+    </div>
+  </div>
+
+  <!-- Mobile -->
+  <div class="bp-card">
+    <div class="bp-head">
+      <div class="bp-name">Mobile</div>
+      <div class="bp-size">&lt;768px</div>
+    </div>
+    <div class="bp-body">
+      <div class="bp-mobile-chrome">
+        <div class="bp-mobile-status">
+          <div class="bp-mobile-status-text">9:28</div>
+          <div class="bp-mobile-status-text">5G ▓</div>
+        </div>
+        <div class="bp-mobile-modal">
+          <div class="bp-mobile-header">
+            <div class="bp-mobile-title">Commercial Approval</div>
+            <div class="bp-mobile-meta">Renata Benesova · No due date</div>
+          </div>
+          <div class="bp-mobile-tabs">
+            <div class="bp-mobile-tab active">Task</div>
+            <div class="bp-mobile-tab">Details</div>
+            <div class="bp-mobile-tab">Comments</div>
+          </div>
+          <div class="bp-mobile-content">
+            <div style="height:8px;border-radius:3px;background:rgba(0,0,0,0.07);margin-bottom:10px;width:85%;"></div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+              <div style="height:28px;border-radius:5px;background:rgba(91,33,182,0.1);border:2px solid rgba(91,33,182,0.4);display:flex;align-items:center;padding:0 8px;font-size:9px;font-weight:600;color:var(--slot-1);">● Approve</div>
+              <div style="height:28px;border-radius:5px;background:#f8f9fb;border:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;padding:0 8px;font-size:9px;color:var(--text-2);">○ Deny</div>
+            </div>
+            <div style="height:5px;border-radius:2px;background:rgba(0,0,0,0.06);margin-bottom:4px;width:50%;"></div>
+            <div style="height:32px;border-radius:5px;border:1px solid rgba(0,0,0,0.08);background:#f8f9fb;"></div>
+          </div>
+          <div class="bp-mobile-footer">
+            <div class="bp-mobile-btn">Submit</div>
+            <div class="bp-mobile-btn-ghost">Cancel</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-3);text-align:center;">Panel becomes tabs. Decision buttons become full-width tappable cards.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── SECTION 5: Notification Channels (NEW) ── -->
+<div class="section-title">05 · Notification Channels — Current issues + solutions (DES-627)</div>
+<div class="channels-grid">
+
+  <div class="ch-card">
+    <div class="ch-head">
+      <div class="ch-icon" style="background:#f0f4ff;">📧</div>
+      <div class="ch-info">
+        <div class="ch-name">Email</div>
+        <div class="ch-status" style="color:#dc2626;">2 critical issues</div>
+      </div>
+      <span class="tag tag-new">needs design</span>
+    </div>
+    <div class="ch-body">
+      <div class="ch-issue-row"><div class="ch-issue-dot p0"></div><div class="ch-issue-text"><strong>No action buttons.</strong> User must navigate to platform. Breaks the zero-friction approval for executives.</div></div>
+      <div class="ch-issue-row"><div class="ch-issue-dot p0"></div><div class="ch-issue-text"><strong>Insufficient context.</strong> Not enough detail to approve without opening the task.</div></div>
+      <div class="ch-solution">
+        <div class="ch-solution-title">✓ Solution</div>
+        <div class="ch-solution-text">Rich HTML email with: vendor logo, amount, savings delta, AI recommendation badge. Inline Approve / Decline buttons (magic link tokens). Decision recorded without login for low-risk Ratification tasks.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ch-card">
+    <div class="ch-head">
+      <div class="ch-icon" style="background:#f0fff4;">#</div>
+      <div class="ch-info">
+        <div class="ch-name">Slack / Teams</div>
+        <div class="ch-status" style="color:#f59e0b;">2 issues</div>
+      </div>
+      <span class="tag tag-new">needs design</span>
+    </div>
+    <div class="ch-body">
+      <div class="ch-issue-row"><div class="ch-issue-dot p0"></div><div class="ch-issue-text"><strong>Custom tasks missing approval buttons.</strong> Only "View in platform" available.</div></div>
+      <div class="ch-issue-row"><div class="ch-issue-dot p1"></div><div class="ch-issue-text"><strong>Insufficient context</strong> similarly to email — lacking details to decide.</div></div>
+      <div class="ch-solution">
+        <div class="ch-solution-title">✓ Solution</div>
+        <div class="ch-solution-text">Slack Block Kit card: task name, vendor, amount, savings pill, AI recommendation. Interactive buttons: Approve / Decline / View details. Response updates message state (no re-open needed).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ch-card">
+    <div class="ch-head">
+      <div class="ch-icon" style="background:#fff7ed;">🔗</div>
+      <div class="ch-info">
+        <div class="ch-name">In-platform (Task link)</div>
+        <div class="ch-status" style="color:#f59e0b;">1 issue</div>
+      </div>
+    </div>
+    <div class="ch-body">
+      <div class="ch-issue-row"><div class="ch-issue-dot p1"></div><div class="ch-issue-text"><strong>Task entry point unclear.</strong> Link is in active tasks section and requires clicking a simplified workflow card — not obvious for occasional approvers.</div></div>
+      <div class="ch-solution">
+        <div class="ch-solution-title">✓ Solution</div>
+        <div class="ch-solution-text">Persistent "Pending your action" banner at top of dashboard. Direct deep-link from any notification. Task counter badge on nav. Request details page: sticky "Approve now" CTA when task is pending current user.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── SECTION 6: Decision Matrix ── -->
+<div class="section-title">06 · Archetype Decision Matrix — for engineering and design team</div>
+<div class="matrix-grid">
+  <table class="matrix-table">
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Archetype</th>
+        <th>body_layout</th>
+        <th>actions_mode</th>
+        <th>Panel default</th>
+        <th>Left panel</th>
+        <th>Mobile tab</th>
+        <th>Principle</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>User confirms one thing (renewal, simple approval)</td>
+        <td><span class="archetype-badge ab-rat">Ratification</span></td>
+        <td class="mono" style="font-size:10px;">single_view</td>
+        <td class="mono" style="font-size:10px;">task</td>
+        <td>Collapsed</td>
+        <td class="cross">✗</td>
+        <td>Task tab</td>
+        <td>Velocity over process</td>
+      </tr>
+      <tr>
+        <td>User chooses between multiple offers / vendors</td>
+        <td><span class="archetype-badge ab-war">War Room</span></td>
+        <td class="mono" style="font-size:10px;">comparison_grid</td>
+        <td class="mono" style="font-size:10px;">task</td>
+        <td>Expanded</td>
+        <td class="cross">✗</td>
+        <td>Split cards</td>
+        <td>Show data delta, highlight winner</td>
+      </tr>
+      <tr>
+        <td>User enters data from a document (offer details)</td>
+        <td><span class="archetype-badge ab-inp">Input · Source</span></td>
+        <td class="mono" style="font-size:10px;">split_source</td>
+        <td class="mono" style="font-size:10px;">task</td>
+        <td>Collapsed</td>
+        <td class="check">✓ PDF</td>
+        <td>Swipe left/right</td>
+        <td>Show source, AI-prefill fields</td>
+      </tr>
+      <tr>
+        <td>User completes multi-step data collection</td>
+        <td><span class="archetype-badge ab-inp">Input · Stepped</span></td>
+        <td class="mono" style="font-size:10px;">stepped</td>
+        <td class="mono" style="font-size:10px;">wizard</td>
+        <td>Collapsed</td>
+        <td class="check">✓ Step nav</td>
+        <td>Progress bar top</td>
+        <td>One step at a time, clear progress</td>
+      </tr>
+      <tr>
+        <td>System is waiting on external (DocuSign, Ironclad, vendor)</td>
+        <td><span class="archetype-badge ab-pul">Pulse</span></td>
+        <td class="mono" style="font-size:10px;">status_hero</td>
+        <td class="mono" style="font-size:10px;">passive</td>
+        <td>Hidden</td>
+        <td class="cross">✗</td>
+        <td>Status only</td>
+        <td>Human language, not status codes</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div style="max-width:1200px;margin:24px auto 0;padding:14px 16px;background:rgba(91,33,182,0.05);border:1px solid rgba(91,33,182,0.15);border-radius:8px;font-size:11px;color:var(--text-2);line-height:1.6;">
+  <strong style="color:var(--slot-1);">Shell contract:</strong> The shell renders 4 named slots. Task type definitions provide <span class="mono" style="font-size:10px;background:rgba(0,0,0,0.05);padding:1px 4px;border-radius:3px;">body_layout</span>, <span class="mono" style="font-size:10px;background:rgba(0,0,0,0.05);padding:1px 4px;border-radius:3px;">panelSections[]</span>, and <span class="mono" style="font-size:10px;background:rgba(0,0,0,0.05);padding:1px 4px;border-radius:3px;">actions_mode</span>. The left panel (PDF viewer, step nav) is always body-internal — the shell never renders it as a named slot. New task types are data configuration, not new screens.
+</div>
+
+</body>
+</html>

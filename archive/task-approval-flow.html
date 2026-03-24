@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Approval Section — Design Phases</title>
+<style>
+  /* ─── Tokens ─── */
+  :root {
+    --bg: #ffffff;
+    --bg2: #fafbfc;
+    --bg3: #f5f6f8;
+    --t1: rgba(15,23,41,1);
+    --t2: rgba(15,23,41,0.7);
+    --t3: rgba(15,23,41,0.5);
+    --t4: rgba(15,23,41,0.35);
+    --b1: rgba(15,23,41,0.08);
+    --b2: rgba(15,23,41,0.12);
+    --purple: #6000f0;
+    --purple-light: #f0e5ff;
+    --green: #16a249;
+    --green-light: #e8fcef;
+    --red: #dc2828;
+    --red-light: #fef1f2;
+    --amber: #f97415;
+    --amber-light: #fff2eb;
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --font: 'Inter', -apple-system, system-ui, sans-serif;
+    --r-sm: 6px;
+    --r-md: 8px;
+    --r-lg: 12px;
+    --r-full: 9999px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg2); color: var(--t1); -webkit-font-smoothing: antialiased; }
+
+  /* ─── Phase Switcher ─── */
+  .phase-nav { 
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg); border-bottom: 1px solid var(--b1);
+    padding: 0 24px; display: flex; align-items: center; height: 56px; gap: 8px;
+  }
+  .phase-nav-title { font-size: 14px; font-weight: 500; color: var(--t2); margin-right: 16px; white-space: nowrap; }
+  .phase-btn {
+    height: 32px; padding: 0 14px; border-radius: var(--r-full); border: 1px solid var(--b1);
+    background: var(--bg); font-size: 12px; font-weight: 500; color: var(--t2);
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .phase-btn:hover { border-color: var(--b2); background: var(--bg2); }
+  .phase-btn.active { background: var(--purple); color: white; border-color: var(--purple); }
+  .phase-btn .phase-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .phase-btn.active .phase-dot { background: rgba(255,255,255,0.5); }
+
+  .phase-desc {
+    margin-left: auto; font-size: 12px; color: var(--t3); max-width: 400px;
+    text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ─── Phase Content ─── */
+  .phase-content { display: none; }
+  .phase-content.active { display: block; }
+
+  /* ─── Form Builder (Phase 1 + 2) ─── */
+  .builder { display: grid; grid-template-columns: 220px 1fr 300px; height: calc(100vh - 56px); }
+  .builder-sidebar {
+    background: var(--bg); border-right: 1px solid var(--b1); overflow-y: auto; padding: 0;
+  }
+  .builder-canvas {
+    background: var(--bg2); overflow-y: auto; padding: 32px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .builder-props {
+    background: var(--bg); border-left: 1px solid var(--b1); overflow-y: auto; padding: 20px;
+  }
+
+  /* Header bar */
+  .builder-header {
+    grid-column: 1 / -1; display: flex; align-items: center;
+    padding: 0 24px; height: 52px; border-bottom: 1px solid var(--b1);
+    background: var(--bg); gap: 16px;
+  }
+  .builder-header-title { font-size: 14px; font-weight: 500; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+  .builder-header-title .path { color: var(--t3); }
+  .builder-tabs { display: flex; gap: 0; margin-left: 24px; height: 100%; }
+  .builder-tab {
+    padding: 0 16px; font-size: 14px; font-weight: 500; color: var(--t3);
+    border: none; background: none; cursor: pointer; height: 100%;
+    display: flex; align-items: center; border-bottom: 2px solid transparent;
+  }
+  .builder-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+  .builder-header-actions { margin-left: auto; display: flex; gap: 8px; }
+
+  /* Sidebar sections */
+  .sidebar-section { padding: 16px 16px 8px; }
+  .sidebar-section-label { font-size: 12px; font-weight: 500; color: var(--t3); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border-radius: var(--r-sm); cursor: grab; font-size: 14px; color: var(--t1); transition: background 0.1s;
+  }
+  .sidebar-item:hover { background: var(--bg3); }
+  .sidebar-item.disabled { opacity: 0.4; cursor: not-allowed; }
+  .sidebar-item .item-icon { width: 18px; height: 18px; color: var(--t3); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .sidebar-item .item-icon svg { width: 16px; height: 16px; }
+
+  /* Approval section special styling in sidebar */
+  .sidebar-item.approval-item { 
+    background: var(--purple-light); border: 1px solid rgba(96,0,240,0.12);
+    margin: 0 0 4px; 
+  }
+  .sidebar-item.approval-item .item-icon { color: var(--purple); }
+  .sidebar-item.approval-item:hover { background: rgba(96,0,240,0.12); }
+
+  /* Canvas */
+  .canvas-form { width: 560px; }
+  .canvas-page-tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; background: var(--bg); border: 1px solid var(--b1);
+    border-bottom: none; border-radius: var(--r-md) var(--r-md) 0 0;
+    font-size: 13px; font-weight: 500; color: var(--t2);
+  }
+  .canvas-body {
+    background: var(--bg); border: 1px solid var(--b1); border-radius: 0 var(--r-md) var(--r-md) var(--r-md);
+    padding: 24px; min-height: 400px;
+  }
+  .canvas-section-title { font-size: 16px; font-weight: 500; color: var(--t1); margin-bottom: 4px; }
+  .canvas-section-desc { font-size: 14px; color: var(--t3); margin-bottom: 16px; }
+
+  .canvas-field {
+    padding: 12px 16px; border: 1px solid var(--b1); border-radius: var(--r-md);
+    margin-bottom: 12px; background: var(--bg);
+  }
+  .canvas-field.selected { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-light); }
+  .canvas-field-label { font-size: 14px; font-weight: 500; color: var(--t1); margin-bottom: 6px; }
+  .canvas-field-label .req { color: var(--red); margin-left: 2px; }
+  .canvas-field-placeholder { font-size: 14px; color: var(--t4); }
+  .canvas-field-radio { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 14px; color: var(--t2); }
+  .canvas-field-radio .dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--t4); flex-shrink: 0; }
+
+  /* Approval Section on canvas */
+  .canvas-approval {
+    margin-top: 24px; padding: 20px; border: 2px dashed var(--purple);
+    border-radius: var(--r-lg); background: linear-gradient(135deg, rgba(96,0,240,0.02), rgba(96,0,240,0.05));
+    position: relative;
+  }
+  .canvas-approval-badge {
+    position: absolute; top: -10px; left: 16px;
+    padding: 2px 10px; background: var(--purple); color: white;
+    font-size: 11px; font-weight: 500; border-radius: var(--r-full);
+    letter-spacing: 0.02em;
+  }
+  .canvas-approval-label { font-size: 13px; font-weight: 500; color: var(--t3); margin-bottom: 12px; margin-top: 4px; }
+  .canvas-approval-desc { font-size: 12px; color: var(--t3); margin-bottom: 16px; line-height: 1.5; }
+  .canvas-approval-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .canvas-approval-btn {
+    height: 36px; padding: 0 20px; border-radius: var(--r-sm); font-size: 14px; font-weight: 500;
+    border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .canvas-approval-btn.success { background: var(--green); color: white; }
+  .canvas-approval-btn.error { background: var(--red); color: white; }
+  .canvas-approval-btn.other { background: var(--bg); color: var(--t1); border: 1px solid var(--b2); }
+  .canvas-approval-btn.selected { box-shadow: 0 0 0 2px var(--purple), 0 0 0 4px var(--purple-light); }
+
+  .canvas-rejection-note {
+    margin-top: 12px; padding: 12px; background: var(--bg); border: 1px solid var(--b1);
+    border-radius: var(--r-sm);
+  }
+  .canvas-rejection-note-label { font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px; }
+  .canvas-rejection-note-field {
+    width: 100%; padding: 8px; border: 1px solid var(--b1); border-radius: var(--r-sm);
+    font-size: 13px; color: var(--t4); resize: none; height: 48px;
+  }
+
+  /* Drop zone indicator */
+  .canvas-dropzone {
+    margin-top: 16px; padding: 24px; border: 2px dashed var(--b2); border-radius: var(--r-lg);
+    text-align: center; font-size: 13px; color: var(--t3);
+    background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(15,23,41,0.01) 8px, rgba(15,23,41,0.01) 16px);
+    transition: all 0.2s ease;
+  }
+  .canvas-dropzone.drag-over {
+    border-color: var(--purple); background: var(--purple-light);
+    color: var(--purple); font-weight: 500;
+    box-shadow: 0 0 0 4px rgba(96,0,240,0.08);
+  }
+
+  /* Approval section entrance animation */
+  @keyframes approvalSlideIn {
+    0% { opacity: 0; transform: translateY(-12px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .canvas-approval.entering { animation: approvalSlideIn 0.3s ease-out forwards; }
+
+  /* Dragging state for catalogue item */
+  .sidebar-item.approval-item[draggable="true"] { cursor: grab; }
+  .sidebar-item.approval-item.dragging { opacity: 0.4; cursor: grabbing; }
+
+  /* Properties panel */
+  .props-title { font-size: 14px; font-weight: 500; color: var(--t1); margin-bottom: 16px; }
+  .props-field { margin-bottom: 16px; }
+  .props-label { font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px; display: block; }
+  .props-input {
+    width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--b1);
+    border-radius: var(--r-sm); font-size: 13px; color: var(--t1); outline: none;
+  }
+  .props-input:focus { border-color: var(--purple); box-shadow: 0 0 0 2px var(--purple-light); }
+  .props-select {
+    width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--b1);
+    border-radius: var(--r-sm); font-size: 13px; color: var(--t1); outline: none;
+    background: var(--bg); appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+  .props-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .props-toggle-track {
+    width: 36px; height: 20px; border-radius: 10px; background: var(--b2);
+    position: relative; transition: background 0.15s; flex-shrink: 0;
+  }
+  .props-toggle-track.on { background: var(--purple); }
+  .props-toggle-track::after {
+    content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background: white; top: 2px; left: 2px; transition: transform 0.15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .props-toggle-track.on::after { transform: translateX(16px); }
+  .props-toggle-label { font-size: 13px; color: var(--t2); }
+  .props-divider { height: 1px; background: var(--b1); margin: 16px 0; }
+
+  .props-btn-list { display: flex; flex-direction: column; gap: 6px; }
+  .props-btn-item {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border: 1px solid var(--b1); border-radius: var(--r-sm); cursor: pointer;
+    font-size: 13px; transition: all 0.1s;
+  }
+  .props-btn-item:hover { border-color: var(--b2); }
+  .props-btn-item.selected { border-color: var(--purple); background: var(--purple-light); }
+  .props-btn-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .props-btn-dot.success { background: var(--green); }
+  .props-btn-dot.error { background: var(--red); }
+  .props-btn-dot.other { background: var(--t4); }
+  .props-btn-name { flex: 1; font-weight: 500; }
+  .props-btn-type { font-size: 11px; color: var(--t3); text-transform: uppercase; }
+  .props-add-btn {
+    width: 100%; height: 32px; border: 1px dashed var(--b2); border-radius: var(--r-sm);
+    background: none; font-size: 13px; color: var(--t3); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .props-add-btn:hover { background: var(--bg2); color: var(--t2); }
+
+  /* Form type badge */
+  .form-type-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: var(--r-full);
+    font-size: 11px; font-weight: 500;
+    background: var(--purple-light); color: var(--purple);
+  }
+
+  /* ─── Phase 2 additions ─── */
+  .preview-badge { 
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; background: var(--amber-light); border: 1px solid rgba(249,116,21,0.2);
+    border-radius: var(--r-full); font-size: 12px; font-weight: 500; color: var(--amber);
+  }
+
+  /* ─── Phase 3: Approval Task ─── */
+  .task-modal {
+    max-width: 960px; margin: 24px auto; background: var(--bg);
+    border: 1px solid var(--b1); border-radius: var(--r-lg);
+    min-height: calc(100vh - 56px - 48px);
+    display: flex; flex-direction: column;
+  }
+  .task-header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 24px; border-bottom: 1px solid var(--b1);
+  }
+  .task-header-title { font-size: 16px; font-weight: 500; }
+  .task-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; background: var(--bg2); border: 1px solid var(--b1);
+    border-radius: var(--r-full); font-size: 13px; color: var(--t2);
+  }
+  .task-chip .chip-icon { width: 18px; height: 18px; border-radius: 50%; background: #4285F4; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 500; }
+  .task-content { flex: 1; padding: 24px; max-width: 720px; }
+  .task-question { font-size: 24px; font-weight: 400; letter-spacing: -0.02em; margin-bottom: 16px; line-height: 1.3; }
+  .task-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; font-size: 14px; color: var(--t2); }
+  .task-meta .avatar { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); }
+  .task-card { border: 1px solid var(--b1); border-radius: var(--r-lg); padding: 24px; }
+  .task-vendor { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+  .task-vendor-icon { width: 44px; height: 44px; border-radius: var(--r-lg); background: var(--bg2); border: 1px solid var(--b1); display: flex; align-items: center; justify-content: center; }
+  .task-vendor-icon .g { width: 28px; height: 28px; border-radius: 50%; background: #4285F4; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; font-weight: 500; }
+  .task-vendor-name { font-size: 22px; font-weight: 500; }
+  .task-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 16px; }
+  .task-metric-label { font-size: 13px; color: var(--t3); margin-bottom: 4px; }
+  .task-metric-value { font-size: 14px; font-weight: 500; }
+  .task-sep { height: 1px; background: var(--b1); margin: 16px 0; }
+  .task-reason-label { font-size: 16px; font-weight: 500; margin-bottom: 12px; }
+  .task-textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--b1); border-radius: var(--r-sm);
+    font-size: 14px; resize: vertical; outline: none; min-height: 80px; color: var(--t4);
+  }
+  .task-footer {
+    padding: 16px 24px; border-top: 1px solid var(--b1);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+  .task-btn {
+    height: 40px; padding: 0 24px; border-radius: var(--r-sm); font-size: 14px; font-weight: 500;
+    border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .task-btn.success { background: var(--purple); color: white; }
+  .task-btn.error { background: var(--red); color: white; }
+  .task-btn.other { background: var(--bg); color: var(--t1); border: 1px solid var(--b2); }
+
+  /* ─── Phase 4: Slack/Teams ─── */
+  .comms-container { max-width: 800px; margin: 32px auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 0 24px; }
+  .comms-card { background: var(--bg); border: 1px solid var(--b1); border-radius: var(--r-lg); overflow: hidden; }
+  .comms-card-header { padding: 16px 20px; border-bottom: 1px solid var(--b1); display: flex; align-items: center; gap: 10px; }
+  .comms-card-header-icon { width: 28px; height: 28px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; }
+  .comms-card-header-icon.slack { background: #4A154B; }
+  .comms-card-header-icon.teams { background: #464EB8; }
+  .comms-card-header-icon svg { width: 16px; height: 16px; fill: white; }
+  .comms-card-header-title { font-size: 14px; font-weight: 500; }
+
+  .slack-msg { padding: 16px 20px; }
+  .slack-msg-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .slack-bot-icon { width: 24px; height: 24px; border-radius: 4px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 500; }
+  .slack-bot-name { font-size: 14px; font-weight: 500; color: var(--t1); }
+  .slack-time { font-size: 12px; color: var(--t3); }
+  .slack-body { font-size: 14px; color: var(--t1); line-height: 1.5; margin-bottom: 12px; }
+  .slack-attachment { border-left: 4px solid var(--purple); padding: 8px 12px; margin-bottom: 12px; }
+  .slack-attachment-row { display: flex; gap: 24px; margin-bottom: 4px; }
+  .slack-attachment-label { font-size: 12px; font-weight: 500; color: var(--t2); }
+  .slack-attachment-value { font-size: 12px; color: var(--t1); }
+  .slack-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+  .slack-btn {
+    height: 32px; padding: 0 16px; border-radius: 4px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--b2); cursor: pointer; display: inline-flex; align-items: center;
+  }
+  .slack-btn.green { background: #2eb67d; color: white; border-color: #2eb67d; }
+  .slack-btn.red { background: var(--bg); color: #e01e5a; border-color: #e01e5a; }
+  .slack-btn.grey { background: var(--bg); color: var(--t2); }
+
+  /* ─── Phase 5: Widget Context ─── */
+  .context-container { max-width: 960px; margin: 32px auto; padding: 0 24px; }
+  .context-split { display: grid; grid-template-columns: 1fr 360px; gap: 0; border: 1px solid var(--b1); border-radius: var(--r-lg); overflow: hidden; min-height: 500px; }
+  .context-main { padding: 24px; background: var(--bg); }
+  .context-sidebar { padding: 20px; background: var(--bg2); border-left: 1px solid var(--b1); }
+  .context-sidebar-title { font-size: 13px; font-weight: 500; color: var(--t3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .widget-card { padding: 16px; background: var(--bg); border: 1px solid var(--b1); border-radius: var(--r-md); margin-bottom: 12px; }
+  .widget-card-title { font-size: 11px; font-weight: 500; color: var(--t3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .widget-bar-track { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; margin-bottom: 6px; position: relative; }
+  .widget-bar-fill { height: 100%; border-radius: 4px; }
+  .widget-meta-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--t3); }
+  .placement-toggle { display: flex; border: 1px solid var(--b1); border-radius: var(--r-sm); overflow: hidden; margin-bottom: 12px; }
+  .placement-opt { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 500; color: var(--t3); cursor: pointer; border: none; background: var(--bg); }
+  .placement-opt.active { background: var(--purple-light); color: var(--purple); }
+
+  /* ─── Shared Button ─── */
+  .btn { height: 32px; padding: 0 16px; border-radius: var(--r-sm); font-size: 14px; font-weight: 500; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--purple); color: white; }
+  .btn-outline { background: var(--bg); color: var(--t1); border: 1px solid var(--b1); }
+  .btn-destructive { background: var(--red); color: white; }
+  .btn-sm { height: 28px; font-size: 12px; padding: 0 12px; }
+  .btn-ghost { background: none; color: var(--t2); border: 1px solid transparent; }
+
+  /* ─── Annotations ─── */
+  .annotation {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: var(--r-sm);
+    font-size: 10px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.04em; position: absolute;
+  }
+  .annotation.new { background: var(--green-light); color: var(--green); }
+  .annotation.changed { background: var(--amber-light); color: var(--amber); }
+
+  /* Phase info bar */
+  .phase-info {
+    padding: 12px 24px; background: var(--blue-light); border-bottom: 1px solid rgba(37,99,235,0.1);
+    font-size: 13px; color: var(--blue); display: flex; align-items: center; gap: 8px;
+  }
+  .phase-info strong { font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- ═══ Phase Navigation ═══ -->
+<nav class="phase-nav">
+  <span class="phase-nav-title">Design Phase</span>
+  <button class="phase-btn active" onclick="showPhase(1)"><span class="phase-dot" style="background:var(--green)"></span> Form Builder</button>
+  <button class="phase-btn" onclick="showPhase(2)"><span class="phase-dot" style="background:var(--blue)"></span> Preview</button>
+  <button class="phase-btn" onclick="showPhase(3)"><span class="phase-dot" style="background:var(--amber)"></span> Approval Task</button>
+  <button class="phase-btn" onclick="showPhase(4)"><span class="phase-dot" style="background:var(--purple)"></span> Slack / Teams</button>
+  <button class="phase-btn" onclick="showPhase(5)"><span class="phase-dot" style="background:var(--t3)"></span> Widgets</button>
+  <span class="phase-desc" id="phaseDesc">Form Builder — Approval Section (Catalogue + Canvas + Properties)</span>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHASE 1: Form Builder — Approval Section
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="phase-content active" id="phase1">
+  <div class="phase-info">
+    <strong>Phase 1:</strong> Approval Section in Form Builder — Catalogue item, canvas representation, and properties panel. Unblocks eng spike.
+  </div>
+  <div class="builder">
+    <!-- Header -->
+    <div class="builder-header">
+      <div class="builder-header-title">
+        <span class="path">Forms /</span> General acme intake
+        <span class="form-type-badge" style="margin-left:8px" title="This form contains an approval section">⚡ Approval form</span>
+      </div>
+      <div class="builder-tabs">
+        <button class="builder-tab active">Edit</button>
+        <button class="builder-tab">Preview</button>
+        <button class="builder-tab">Settings</button>
+      </div>
+      <div class="builder-header-actions">
+        <button class="btn btn-outline btn-sm">Preview</button>
+        <button class="btn btn-primary btn-sm">Publish</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="builder-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Standard fields</div>
+        <div class="sidebar-item"><span class="item-icon">☰</span> Multiple choice</div>
+        <div class="sidebar-item"><span class="item-icon">◉</span> Single choice</div>
+        <div class="sidebar-item"><span class="item-icon">▾</span> Dropdown</div>
+        <div class="sidebar-item"><span class="item-icon">¶</span> Long text</div>
+        <div class="sidebar-item"><span class="item-icon">📎</span> File upload</div>
+        <div class="sidebar-item"><span class="item-icon">Aa</span> Short text</div>
+        <div class="sidebar-item"><span class="item-icon">📅</span> Date</div>
+        <div class="sidebar-item"><span class="item-icon">💰</span> Financial figure</div>
+        <div class="sidebar-item"><span class="item-icon">#</span> Number</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Advanced fields</div>
+        <div class="sidebar-item"><span class="item-icon">📄</span> Contract</div>
+        <div class="sidebar-item"><span class="item-icon">🏢</span> Department</div>
+        <div class="sidebar-item"><span class="item-icon">👤</span> Vendor</div>
+        <div class="sidebar-item"><span class="item-icon">⚙️</span> Dynamic dropdown</div>
+      </div>
+      <div class="sidebar-section" style="position:relative;">
+        <div class="sidebar-section-label">Sections</div>
+        <span class="annotation new" style="right:16px;top:14px;">New</span>
+        <div class="sidebar-item approval-item" id="catalogApproval" draggable="true" ondragstart="onApprovalDragStart(event)" ondragend="onApprovalDragEnd(event)" onclick="addApprovalSection()" title="Drag to canvas or click to add">
+          <span class="item-icon">⚡</span> Approval
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="builder-canvas">
+      <div class="canvas-form">
+        <div class="canvas-page-tab">📄 {page.title}…</div>
+        <div class="canvas-body">
+          <div class="canvas-section-title">Vendor Approval</div>
+          <div class="canvas-section-desc">Complete the details below for the procurement request.</div>
+
+          <div class="canvas-field" onclick="selectCanvasField(this, 'Business Justification')">
+            <div class="canvas-field-label">Business Justification<span class="req">*</span></div>
+            <div class="canvas-field-placeholder" style="height:48px;border-radius:var(--r-sm);"></div>
+          </div>
+
+          <div class="canvas-field" onclick="selectCanvasField(this, 'Cost Centre')">
+            <div class="canvas-field-label">Cost Centre<span class="req">*</span></div>
+            <div class="canvas-field-placeholder">Select cost centre...</div>
+          </div>
+
+          <div class="canvas-field" onclick="selectCanvasField(this, 'Requested Amount')">
+            <div class="canvas-field-label">Requested Amount</div>
+            <div class="canvas-field-placeholder">£0.00</div>
+          </div>
+
+          <!-- ═══ THE APPROVAL SECTION ═══ -->
+          <div id="approvalDropzone" class="canvas-dropzone" ondragover="onDropzoneOver(event)" ondragenter="onDropzoneEnter(event)" ondragleave="onDropzoneLeave(event)" ondrop="onDropzoneDrop(event)">
+            ⚡ Drag "Approval" from the Sections catalogue to add an approval section
+          </div>
+          <div class="canvas-approval" id="approvalSection" onclick="selectApprovalSection()" style="display:none;">
+            <div class="canvas-approval-badge">APPROVAL SECTION</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="canvas-approval-label" style="margin-bottom:0;">Replaces the form Submit button in the task footer</div>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();removeApprovalSection()" style="color:var(--red);font-size:11px;">Remove</button>
+            </div>
+
+            <div class="canvas-rejection-note" style="margin-top:12px;">
+              <div class="canvas-rejection-note-label">Reason for your decision</div>
+              <textarea class="canvas-rejection-note-field" readonly placeholder="Add any notes or reasoning for your decision"></textarea>
+            </div>
+
+            <div class="canvas-approval-buttons" style="margin-top:12px">
+              <button class="canvas-approval-btn error" onclick="event.stopPropagation();selectButton(0)">Decline</button>
+              <button class="canvas-approval-btn other" onclick="event.stopPropagation();selectButton(1)">Decline &amp; Continue</button>
+              <button class="canvas-approval-btn success" onclick="event.stopPropagation();selectButton(2)">Approve</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Properties Panel -->
+    <div class="builder-props" id="propsPanel">
+      <div style="padding:40px 16px;text-align:center;color:var(--t4);font-size:13px;">
+        <div style="font-size:20px;margin-bottom:8px;">👆</div>
+        Click an element on the canvas to edit its properties
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHASE 2: Complete Builder Experience
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase2">
+  <div class="phase-info">
+    <strong>Phase 2:</strong> Form-level indicator and Preview tab changes. The builder signals "this is an approval form" and Preview shows configured buttons instead of Submit.
+  </div>
+  <div style="max-width:960px;margin:32px auto;padding:0 24px;">
+    <div style="background:var(--bg);border:1px solid var(--b1);border-radius:var(--r-lg);overflow:hidden;">
+      <!-- Header with working tabs -->
+      <div style="display:flex;align-items:center;padding:0 24px;height:52px;border-bottom:1px solid var(--b1);gap:16px;">
+        <div style="font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;">
+          <span style="color:var(--t3)">Forms /</span> General acme intake
+          <span class="form-type-badge">⚡ Approval form</span>
+        </div>
+        <div style="display:flex;height:100%;margin-left:24px;">
+          <button class="builder-tab p2-tab" data-tab="edit" onclick="switchBuilderTab('edit')">Edit</button>
+          <button class="builder-tab p2-tab active" data-tab="preview" onclick="switchBuilderTab('preview')">Preview</button>
+          <button class="builder-tab p2-tab" data-tab="settings" onclick="switchBuilderTab('settings')">Settings</button>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+          <span class="preview-badge">👁 Preview mode</span>
+          <button class="btn btn-primary btn-sm">Publish</button>
+        </div>
+      </div>
+
+      <!-- ─── Edit Tab ─── -->
+      <div class="p2-tab-content" id="p2-edit" style="display:none;">
+        <div style="padding:48px;display:flex;justify-content:center;">
+          <div style="width:560px;text-align:center;color:var(--t3);padding:40px 0;">
+            <div style="font-size:20px;margin-bottom:8px;">✏️</div>
+            <div style="font-size:14px;margin-bottom:8px;">Interactive editor shown in <strong style="font-weight:500;color:var(--t1);">Phase 1 — Form Builder</strong></div>
+            <div style="font-size:13px;">This form contains an approval section with 3 configurable buttons.</div>
+            <div style="margin-top:16px;">
+              <span class="form-type-badge" style="font-size:12px;">⚡ Approval form</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Preview Tab ─── -->
+      <div class="p2-tab-content" id="p2-preview">
+        <div style="padding:48px;display:flex;justify-content:center;">
+          <div style="width:560px;">
+            <h2 style="font-size:20px;font-weight:500;margin-bottom:4px;">Security details</h2>
+            <p style="font-size:14px;color:var(--t3);margin-bottom:24px;">Lorem ipsum dolor sit amet consectetur.</p>
+
+            <div style="margin-bottom:16px;">
+              <label style="font-size:14px;font-weight:500;display:block;margin-bottom:6px;">Question Name<span style="color:var(--red)">*</span></label>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--t2);cursor:pointer;">
+                  <input type="radio" name="q1" style="accent-color:var(--purple)"> Option A
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--t2);cursor:pointer;">
+                  <input type="radio" name="q1" style="accent-color:var(--purple)"> Option B
+                </label>
+              </div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <label style="font-size:14px;font-weight:500;display:block;margin-bottom:6px;">Business justification</label>
+              <textarea style="width:100%;padding:8px 12px;border:1px solid var(--b1);border-radius:var(--r-sm);font-size:14px;resize:vertical;min-height:64px;outline:none;" placeholder="Explain why this purchase is needed"></textarea>
+            </div>
+
+            <!-- CHANGED: Footer shows approval buttons instead of Submit -->
+            <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--b1);position:relative;">
+              <span class="annotation changed" style="top:-24px;right:0;">Changed from Submit</span>
+              <div style="margin-bottom:16px;">
+                <div style="font-size:14px;font-weight:500;margin-bottom:8px;">Reason for your decision</div>
+                <textarea style="width:100%;padding:8px 12px;border:1px solid var(--b1);border-radius:var(--r-sm);font-size:14px;resize:vertical;min-height:60px;outline:none;color:var(--t4);" placeholder="Add any notes or reasoning for your decision"></textarea>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button class="btn btn-sm" style="background:var(--red);color:white;height:36px;padding:0 20px;">Decline</button>
+                <button class="btn btn-sm" style="background:var(--bg);color:var(--t1);border:1px solid var(--b2);height:36px;padding:0 20px;">Decline &amp; Continue Negotiation</button>
+                <button class="btn btn-sm" style="background:var(--green);color:white;height:36px;padding:0 20px;">Approve</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Settings Tab ─── -->
+      <div class="p2-tab-content" id="p2-settings" style="display:none;">
+        <div style="padding:48px;display:flex;justify-content:center;">
+          <div style="width:560px;">
+            <h2 style="font-size:20px;font-weight:500;margin-bottom:4px;">Form Settings</h2>
+            <p style="font-size:14px;color:var(--t3);margin-bottom:24px;">Configure form behaviour and approval workflow settings.</p>
+
+            <div style="margin-bottom:20px;">
+              <label style="font-size:14px;font-weight:500;display:block;margin-bottom:6px;">Form name</label>
+              <input class="props-input" value="General acme intake" style="height:36px;font-size:14px;" />
+            </div>
+
+            <div style="margin-bottom:20px;">
+              <label style="font-size:14px;font-weight:500;display:block;margin-bottom:6px;">Description</label>
+              <textarea style="width:100%;padding:8px 12px;border:1px solid var(--b1);border-radius:var(--r-sm);font-size:14px;resize:vertical;min-height:64px;outline:none;" placeholder="Describe the purpose of this form">Intake form for new vendor approval requests within the ACME programme.</textarea>
+            </div>
+
+            <div style="height:1px;background:var(--b1);margin:24px 0;"></div>
+
+            <div style="margin-bottom:20px;">
+              <div style="font-size:14px;font-weight:500;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                Task type
+                <span class="form-type-badge">⚡ Approval</span>
+              </div>
+              <div style="background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r-md);padding:16px;">
+                <div style="font-size:13px;color:var(--t2);margin-bottom:12px;">This form is configured as an approval task. The following settings are active:</div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                    <span style="width:18px;height:18px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">✓</span>
+                    <span style="color:var(--t1);">3 approval buttons configured</span>
+                    <span style="font-size:12px;color:var(--t3);margin-left:auto;">Decline, Decline & Continue, Approve</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                    <span style="width:18px;height:18px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">✓</span>
+                    <span style="color:var(--t1);">Reason field enabled</span>
+                    <span style="font-size:12px;color:var(--t3);margin-left:auto;">Always visible for audit trail</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                    <span style="width:18px;height:18px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">✓</span>
+                    <span style="color:var(--t1);">Comms binding active</span>
+                    <span style="font-size:12px;color:var(--t3);margin-left:auto;">Slack + Teams auto-sync</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                    <span style="width:18px;height:18px;border-radius:50%;background:var(--amber-light);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">!</span>
+                    <span style="color:var(--t1);">2 widgets attached</span>
+                    <span style="font-size:12px;color:var(--t3);margin-left:auto;">Budget Variance, Price Benchmark</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="height:1px;background:var(--b1);margin:24px 0;"></div>
+
+            <div style="margin-bottom:20px;">
+              <div style="font-size:14px;font-weight:500;margin-bottom:12px;">Notifications</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <label class="props-toggle">
+                  <span class="props-toggle-track on" onclick="this.classList.toggle('on')"></span>
+                  <span style="font-size:13px;color:var(--t1);">Send Slack notification on assignment</span>
+                </label>
+                <label class="props-toggle">
+                  <span class="props-toggle-track on" onclick="this.classList.toggle('on')"></span>
+                  <span style="font-size:13px;color:var(--t1);">Send Teams notification on assignment</span>
+                </label>
+                <label class="props-toggle">
+                  <span class="props-toggle-track" onclick="this.classList.toggle('on')"></span>
+                  <span style="font-size:13px;color:var(--t1);">Send email notification on assignment</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHASE 3: Approval Task (End-User)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase3">
+  <div class="phase-info">
+    <strong>Phase 3:</strong> Approval Task — What the assignee sees. Two-pane layout with widgets, always-visible reason field, and configurable 2–5 button footer.
+  </div>
+
+  <!-- Scenario switcher -->
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 24px;background:var(--bg);border-bottom:1px solid var(--b1);">
+    <span style="font-size:12px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.05em;">Scenario:</span>
+    <button class="btn btn-sm" id="scenarioSimple" onclick="switchScenario('simple')" style="background:var(--purple);color:white;border-color:var(--purple);">Simple (2 buttons)</button>
+    <button class="btn btn-sm" id="scenarioComplex" onclick="switchScenario('complex')" style="background:var(--bg);color:var(--t2);border:1px solid var(--b1);">Complex (4 buttons)</button>
+  </div>
+
+  <div style="padding:24px;background:var(--bg2);min-height:calc(100vh - 56px - 48px - 48px);">
+    <div class="task-modal" style="min-height:auto;">
+      <!-- Header -->
+      <div class="task-header">
+        <span class="task-header-title">Manager Approval</span>
+        <div class="task-chip">
+          <span class="chip-icon">G</span>
+          Google New Purchase
+        </div>
+        <div style="flex:1"></div>
+        <span style="font-size:13px;color:var(--t3);">Assigned to: <strong style="font-weight:500;">Alex Chen (You)</strong></span>
+        <button class="btn btn-ghost btn-sm">✕</button>
+      </div>
+
+      <!-- Two-pane body -->
+      <div style="display:flex;flex:1;">
+        <!-- Content area (left) -->
+        <div style="flex:1;padding:24px;border-right:1px solid var(--b1);">
+          <div class="task-question" style="font-size:20px;">What is the final decision for 'Google Workspace Renewal'?</div>
+
+          <!-- Body widget: Budget Variance -->
+          <div style="border:1px solid rgba(22,162,73,0.2);border-radius:var(--r-md);padding:16px;background:var(--green-light);margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="font-size:13px;color:var(--t3);">📊</span>
+              <span style="font-size:11px;font-weight:500;color:var(--green);text-transform:uppercase;letter-spacing:0.05em;">Budget — IT 2025 / Software</span>
+              <span style="margin-left:auto;font-size:12px;padding:2px 8px;border-radius:var(--r-full);background:rgba(22,162,73,0.15);color:var(--green);">79%</span>
+            </div>
+            <div style="height:8px;background:rgba(22,162,73,0.15);border-radius:4px;overflow:hidden;margin-bottom:8px;">
+              <div style="height:100%;width:79%;background:var(--green);border-radius:4px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);">
+              <span>£7.1M committed + £92K request</span>
+              <span style="color:var(--green);font-weight:500;">£1.8M remaining</span>
+            </div>
+          </div>
+
+          <!-- Vendor card -->
+          <div class="task-card" style="margin-bottom:20px;">
+            <div class="task-vendor">
+              <div class="task-vendor-icon"><span class="g">G</span></div>
+              <span class="task-vendor-name" style="font-size:18px;">Google</span>
+            </div>
+            <div class="task-metrics">
+              <div><div class="task-metric-label">Total Amount</div><div class="task-metric-value">£92,000</div></div>
+              <div><div class="task-metric-label">Rolling Frequency</div><div class="task-metric-value">Quarterly</div></div>
+              <div><div class="task-metric-label">Contract Date</div><div class="task-metric-value">24th Mar 2026</div></div>
+            </div>
+            <div class="task-sep"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 0;">
+              <span style="font-size:14px;font-weight:500;">Request Details</span>
+              <span style="color:var(--t3);">▾</span>
+            </div>
+          </div>
+
+          <!-- Reason field (always visible) -->
+          <div>
+            <div style="font-size:14px;font-weight:500;margin-bottom:8px;">Reason for your decision</div>
+            <textarea class="task-textarea" placeholder="Provide reasoning for your decision — captured for audit trail"></textarea>
+            <div style="font-size:11px;color:var(--t3);margin-top:4px;">Required for all decisions — approvals and declines</div>
+          </div>
+        </div>
+
+        <!-- Details panel (right) -->
+        <div style="width:360px;padding:20px;background:var(--bg2);flex-shrink:0;">
+          <div style="font-size:13px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">Request Details</div>
+          <div style="display:flex;flex-direction:column;gap:0;">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1);">
+              <span style="font-size:13px;color:var(--t3);">Vendor</span>
+              <span style="font-size:14px;font-weight:500;">Google</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1);">
+              <span style="font-size:13px;color:var(--t3);">Amount</span>
+              <span style="font-size:14px;font-weight:500;">£92,000</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--b1);">
+              <span style="font-size:13px;color:var(--t3);">Type</span>
+              <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--r-full);background:var(--blue-light);color:var(--blue);">New Purchase</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b1);">
+              <span style="font-size:13px;color:var(--t3);">Due date</span>
+              <span style="font-size:14px;font-weight:500;">29 Mar 2026</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;">
+              <span style="font-size:13px;color:var(--t3);">Cost Centre</span>
+              <span style="font-size:14px;font-weight:500;">IT — ENG-001</span>
+            </div>
+          </div>
+
+          <div style="height:1px;background:var(--b1);margin:16px 0;"></div>
+
+          <!-- Reference widgets -->
+          <div style="font-size:13px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">Insights</div>
+          <div style="border:1px solid var(--b1);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:8px;background:var(--bg);">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;">✨</span>
+                <span style="font-size:13px;color:var(--t3);">Price Benchmark</span>
+              </div>
+              <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--r-full);background:var(--green-light);color:var(--green);">Below median</span>
+            </div>
+          </div>
+          <div style="border:1px solid var(--b1);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:8px;background:var(--bg);">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;">🛡</span>
+                <span style="font-size:13px;color:var(--t3);">Vendor Health</span>
+              </div>
+              <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--r-full);background:var(--green-light);color:var(--green);">All pass</span>
+            </div>
+          </div>
+          <div style="border:1px solid var(--b1);border-radius:var(--r-sm);padding:8px 12px;background:var(--bg);">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;">📄</span>
+                <span style="font-size:13px;color:var(--t3);">Contract Summary</span>
+              </div>
+              <span style="font-size:13px;color:var(--t2);">12 months</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer with dynamic buttons -->
+      <div class="task-footer" id="taskFooter" style="position:relative;">
+        <span style="font-size:13px;color:var(--t3);">⏱ Due in 5 days</span>
+        <div style="display:flex;gap:8px;margin-left:auto;" id="taskButtons">
+          <button class="task-btn error">Decline</button>
+          <button class="task-btn success" style="background:var(--green);">Approve</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHASE 4: Comms Platforms (Slack/Teams)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase4">
+  <div class="phase-info">
+    <strong>Phase 4:</strong> Comms Platform — Button rendering in Slack Block Kit and Teams Adaptive Cards. Buttons auto-bind from the form builder configuration.
+  </div>
+  <div class="comms-container">
+    <!-- Slack -->
+    <div class="comms-card">
+      <div class="comms-card-header">
+        <div class="comms-card-header-icon slack"><svg viewBox="0 0 24 24"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z"/></svg></div>
+        <span class="comms-card-header-title">Slack — Block Kit</span>
+      </div>
+      <div class="slack-msg">
+        <div class="slack-msg-header">
+          <div class="slack-bot-icon">V</div>
+          <span class="slack-bot-name">Vertice</span>
+          <span class="slack-time">9:18 AM</span>
+        </div>
+        <div class="slack-body">
+          <strong>Manager Approval</strong> — Google New Purchase<br>
+          You've been assigned to review this request.
+        </div>
+        <div class="slack-attachment" style="position:relative;">
+          <div style="position:absolute;top:-20px;right:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--r-sm);font-size:10px;font-weight:500;background:var(--purple-light);color:var(--purple);letter-spacing:0.02em;">↑ Populated by widgets with "Show in: Slack" (Phase 5)</div>
+          <div class="slack-attachment-row">
+            <div><div class="slack-attachment-label">Vendor</div><div class="slack-attachment-value">Google</div></div>
+            <div><div class="slack-attachment-label">Amount</div><div class="slack-attachment-value">$92,000</div></div>
+            <div><div class="slack-attachment-label">Due</div><div class="slack-attachment-value">Mar 29, 2026</div></div>
+          </div>
+        </div>
+        <div class="slack-buttons" style="position:relative;">
+          <span class="annotation new" style="top:-22px;left:0;">Auto-bound from form builder</span>
+          <button class="slack-btn red">Decline</button>
+          <button class="slack-btn grey">Decline &amp; Continue</button>
+          <button class="slack-btn green">Approve</button>
+          <button class="slack-btn grey" style="margin-left:auto;font-size:12px;">View in Vertice ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teams -->
+    <div class="comms-card">
+      <div class="comms-card-header">
+        <div class="comms-card-header-icon teams"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></div>
+        <span class="comms-card-header-title">Teams — Adaptive Card</span>
+      </div>
+      <div style="padding:16px 20px;">
+        <div style="padding:16px;background:var(--bg2);border-radius:var(--r-md);border-left:4px solid var(--purple);">
+          <div style="font-size:15px;font-weight:500;margin-bottom:4px;">Manager Approval</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:12px;">Google New Purchase — $92,000</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;position:relative;">
+            <div style="position:absolute;top:-20px;right:0;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--r-sm);font-size:10px;font-weight:500;background:var(--purple-light);color:var(--purple);letter-spacing:0.02em;">↑ Widgets with "Show in: Teams" (Phase 5)</div>
+            <div><div style="font-size:11px;color:var(--t3);font-weight:500;">VENDOR</div><div style="font-size:13px;">Google</div></div>
+            <div><div style="font-size:11px;color:var(--t3);font-weight:500;">AMOUNT</div><div style="font-size:13px;">$92,000</div></div>
+            <div><div style="font-size:11px;color:var(--t3);font-weight:500;">DUE</div><div style="font-size:13px;">Mar 29</div></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;position:relative;">
+            <span class="annotation new" style="top:-22px;left:0;">Auto-bound from form builder</span>
+            <button class="btn btn-sm" style="background:#c50f1f;color:white;">Decline</button>
+            <button class="btn btn-outline btn-sm">Decline &amp; Continue</button>
+            <button class="btn btn-sm" style="background:#6264a7;color:white;">Approve</button>
+          </div>
+        </div>
+        <div style="margin-top:8px;text-align:center;">
+          <button class="btn btn-ghost btn-sm" style="color:var(--blue);">View in Vertice ↗</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:800px;margin:0 auto 32px;padding:0 24px;">
+    <div style="background:var(--bg);border:1px solid var(--b1);border-radius:var(--r-lg);padding:20px;">
+      <div style="font-size:14px;font-weight:500;margin-bottom:12px;">Button Type → Platform Mapping</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--b1);">
+            <th style="text-align:left;padding:8px 12px;font-weight:500;color:var(--t2);">Button Type</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:500;color:var(--t2);">Platform</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:500;color:var(--t2);">Slack</th>
+            <th style="text-align:left;padding:8px 12px;font-weight:500;color:var(--t2);">Teams</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--b1);">
+            <td style="padding:8px 12px;"><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);"></span>Success</span></td>
+            <td style="padding:8px 12px;color:var(--green);">Green button</td>
+            <td style="padding:8px 12px;"><code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:3px;">style: "primary"</code></td>
+            <td style="padding:8px 12px;"><code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:3px;">style: "positive"</code></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--b1);">
+            <td style="padding:8px 12px;"><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--red);"></span>Error</span></td>
+            <td style="padding:8px 12px;color:var(--red);">Red / destructive</td>
+            <td style="padding:8px 12px;"><code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:3px;">style: "danger"</code></td>
+            <td style="padding:8px 12px;"><code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:3px;">style: "destructive"</code></td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;"><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--t4);"></span>Other</span></td>
+            <td style="padding:8px 12px;color:var(--t2);">Outline / neutral</td>
+            <td style="padding:8px 12px;"><code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:3px;">style: default</code></td>
+            <td style="padding:8px 12px;"><code style="font-size:11px;background:var(--bg2);padding:2px 6px;border-radius:3px;">style: "default"</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHASE 5: Widget Configuration (Workflow Builder)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="phase-content" id="phase5">
+  <div class="phase-info">
+    <strong>Phase 5:</strong> Widget Configuration — Granular control over where each widget's data appears: task body, details panel, Slack, Teams, and email notifications.
+  </div>
+
+  <div style="max-width:600px;margin:32px auto;padding:0 24px;">
+    <!-- Drawer header -->
+    <div style="background:var(--bg);border:1px solid var(--b1);border-radius:var(--r-lg);overflow:hidden;">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--b1);">
+        <div style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Task Widgets</div>
+        <div style="font-size:13px;color:var(--t3);line-height:1.5;">Display contextual information in this task that help the assignee make confident, informed choices.</div>
+      </div>
+
+      <div style="padding:24px;">
+
+        <!-- ═══ Vertice Widget: Final Offer ═══ -->
+        <div style="border:1px solid var(--b1);border-radius:var(--r-md);padding:16px;margin-bottom:16px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--t4);cursor:grab;font-size:14px;">⠿</span>
+              <div>
+                <div style="font-size:11px;font-weight:500;color:var(--purple);text-transform:uppercase;letter-spacing:0.05em;">Vertice Widget</div>
+                <div style="font-size:14px;font-weight:500;">Final Offer</div>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:12px;">Remove</button>
+          </div>
+          <div style="font-size:13px;color:var(--t3);margin-bottom:16px;line-height:1.4;">
+            This widget shows the final negotiated offer details including pricing, terms, and payment schedule.
+          </div>
+
+          <!-- Show in: granular destination controls -->
+          <div style="border-top:1px solid var(--b1);padding-top:12px;">
+            <div style="font-size:12px;font-weight:500;color:var(--t2);margin-bottom:8px;">Show in</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" checked style="accent-color:var(--purple);width:15px;height:15px;">
+                <span style="font-size:13px;color:var(--t1);flex:1;">Body</span>
+                <span style="font-size:11px;color:var(--t3);">Main content area</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" style="accent-color:var(--purple);width:15px;height:15px;">
+                <span style="font-size:13px;color:var(--t1);flex:1;">Details panel</span>
+                <span style="font-size:11px;color:var(--t3);">Side panel</span>
+              </label>
+              <div style="height:1px;background:var(--b1);margin:2px 0;"></div>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" checked style="accent-color:#4A154B;width:15px;height:15px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="flex-shrink:0;"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" fill="#E01E5A"/><path d="M8.834 5.042a2.528 2.528 0 0 1-2.52-2.52A2.528 2.528 0 0 1 8.833 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.527 2.527 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z" fill="#36C5F0"/><path d="M18.956 8.834a2.528 2.528 0 0 1 2.522-2.52A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312z" fill="#2EB67D"/><path d="M15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" fill="#ECB22E"/></svg>
+                <span style="font-size:13px;color:var(--t1);flex:1;">Slack</span>
+                <span style="font-size:11px;color:var(--t3);">Notification message</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" checked style="accent-color:#464EB8;width:15px;height:15px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#464EB8" style="flex-shrink:0;"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/></svg>
+                <span style="font-size:13px;color:var(--t1);flex:1;">Teams</span>
+                <span style="font-size:11px;color:var(--t3);">Adaptive card</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" style="accent-color:var(--blue);width:15px;height:15px;">
+                <span style="font-size:14px;flex-shrink:0;">✉</span>
+                <span style="font-size:13px;color:var(--t1);flex:1;">Email</span>
+                <span style="font-size:11px;color:var(--t3);">Email notification</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ Custom Widget ═══ -->
+        <div style="border:1px solid var(--b1);border-radius:var(--r-md);padding:16px;margin-bottom:16px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--t4);cursor:grab;font-size:14px;">⠿</span>
+              <div>
+                <div style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:0.05em;">Custom Widget</div>
+                <div style="font-size:14px;font-weight:500;display:flex;align-items:center;gap:6px;">
+                  My custom widget showing Requirements Gathering
+                  <span style="cursor:pointer;color:var(--t3);font-size:12px;">✎</span>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:12px;">Remove</button>
+          </div>
+
+          <!-- Data field rows -->
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--b1);">
+              <span style="font-size:13px;color:var(--purple);font-weight:500;">approvedBudget</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;color:var(--t3);">Money <span style="font-size:11px;">↗</span></span>
+                <span style="cursor:pointer;color:var(--t4);font-size:13px;" title="Delete field">🗑</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--b1);">
+              <span style="font-size:13px;color:var(--purple);font-weight:500;">contractCurrency</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;color:var(--t3);">Currency <span style="font-size:11px;">↗</span></span>
+                <span style="cursor:pointer;color:var(--t4);font-size:13px;" title="Delete field">🗑</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;">
+              <span style="font-size:13px;color:var(--purple);font-weight:500;">documents</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;color:var(--t3);">Array of Documents <span style="font-size:11px;">↗</span></span>
+                <span style="cursor:pointer;color:var(--t4);font-size:13px;" title="Delete field">🗑</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-outline btn-sm" style="margin-bottom:12px;">+ Add field</button>
+
+          <!-- Show in: granular destination controls -->
+          <div style="border-top:1px solid var(--b1);padding-top:12px;">
+            <div style="font-size:12px;font-weight:500;color:var(--t2);margin-bottom:8px;">Show in</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" style="accent-color:var(--purple);width:15px;height:15px;">
+                <span style="font-size:13px;color:var(--t1);flex:1;">Body</span>
+                <span style="font-size:11px;color:var(--t3);">Main content area</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" checked style="accent-color:var(--purple);width:15px;height:15px;">
+                <span style="font-size:13px;color:var(--t1);flex:1;">Details panel</span>
+                <span style="font-size:11px;color:var(--t3);">Side panel</span>
+              </label>
+              <div style="height:1px;background:var(--b1);margin:2px 0;"></div>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" checked style="accent-color:#4A154B;width:15px;height:15px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" style="flex-shrink:0;"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" fill="#E01E5A"/><path d="M8.834 5.042a2.528 2.528 0 0 1-2.52-2.52A2.528 2.528 0 0 1 8.833 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.527 2.527 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z" fill="#36C5F0"/><path d="M18.956 8.834a2.528 2.528 0 0 1 2.522-2.52A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312z" fill="#2EB67D"/><path d="M15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" fill="#ECB22E"/></svg>
+                <span style="font-size:13px;color:var(--t1);flex:1;">Slack</span>
+                <span style="font-size:11px;color:var(--t3);">Notification message</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" style="accent-color:#464EB8;width:15px;height:15px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#464EB8" style="flex-shrink:0;"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/></svg>
+                <span style="font-size:13px;color:var(--t1);flex:1;">Teams</span>
+                <span style="font-size:11px;color:var(--t3);">Adaptive card</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--r-sm);transition:background 0.1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+                <input type="checkbox" checked style="accent-color:var(--blue);width:15px;height:15px;">
+                <span style="font-size:14px;flex-shrink:0;">✉</span>
+                <span style="font-size:13px;color:var(--t1);flex:1;">Email</span>
+                <span style="font-size:11px;color:var(--t3);">Email notification</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Widget button -->
+        <button style="width:100%;padding:14px;border:2px dashed var(--b2);border-radius:var(--r-md);background:none;color:var(--t3);font-size:12px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--purple)';this.style.color='var(--purple)';this.style.background='var(--purple-light)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--t3)';this.style.background='none'">
+          + Add Widget
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Mapping explanation -->
+    <div style="margin-top:24px;background:var(--bg);border:1px solid var(--b1);border-radius:var(--r-lg);padding:20px;">
+      <div style="font-size:14px;font-weight:500;margin-bottom:12px;">Where widget data appears</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;font-size:12px;">
+        <div style="text-align:center;">
+          <div style="width:40px;height:40px;border-radius:var(--r-md);background:var(--purple-light);color:var(--purple);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:16px;">◧</div>
+          <div style="font-weight:500;color:var(--t1);">Body</div>
+          <div style="color:var(--t3);margin-top:2px;">Hero/full widget in main content</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:40px;height:40px;border-radius:var(--r-md);background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:16px;">◨</div>
+          <div style="font-weight:500;color:var(--t1);">Details</div>
+          <div style="color:var(--t3);margin-top:2px;">Compact reference in side panel</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:40px;height:40px;border-radius:var(--r-md);background:#f9e8ef;color:#E01E5A;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52z" fill="#E01E5A"/><path d="M8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.527 2.527 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z" fill="#36C5F0"/></svg>
+          </div>
+          <div style="font-weight:500;color:var(--t1);">Slack</div>
+          <div style="color:var(--t3);margin-top:2px;">Attachment fields in Block Kit</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:40px;height:40px;border-radius:var(--r-md);background:#ededf7;color:#464EB8;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#464EB8"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/></svg>
+          </div>
+          <div style="font-weight:500;color:var(--t1);">Teams</div>
+          <div style="color:var(--t3);margin-top:2px;">FactSet rows in Adaptive Card</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="width:40px;height:40px;border-radius:var(--r-md);background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:18px;">✉</div>
+          <div style="font-weight:500;color:var(--t1);">Email</div>
+          <div style="color:var(--t3);margin-top:2px;">Data table in email body</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ JavaScript ═══════════════════════════════════════════ -->
+<script>
+const phaseDescs = {
+  1: 'Form Builder — Approval Section (Catalogue + Canvas + Properties)',
+  2: 'Builder Polish — Preview tab & form-level indicator',
+  3: 'Approval Task — Multi-button footer & rejection note (end-user view)',
+  4: 'Comms Platform — Slack Block Kit & Teams Adaptive Card rendering',
+  5: 'Widget Config — Granular destination controls per widget'
+};
+
+function showPhase(n) {
+  document.querySelectorAll('.phase-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.phase-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('phase' + n).classList.add('active');
+  document.querySelectorAll('.phase-btn')[n - 1].classList.add('active');
+  document.getElementById('phaseDesc').textContent = phaseDescs[n];
+}
+
+// ─── Phase 3: Scenario Switcher ───────────────────
+function switchScenario(type) {
+  const simple = document.getElementById('scenarioSimple');
+  const complex = document.getElementById('scenarioComplex');
+  const btnContainer = document.getElementById('taskButtons');
+
+  if (type === 'simple') {
+    simple.style.background = 'var(--purple)'; simple.style.color = 'white'; simple.style.borderColor = 'var(--purple)';
+    complex.style.background = 'var(--bg)'; complex.style.color = 'var(--t2)'; complex.style.borderColor = 'var(--b1)';
+    btnContainer.innerHTML = `
+      <button class="task-btn error">Decline</button>
+      <button class="task-btn success" style="background:var(--green);">Approve</button>
+    `;
+  } else {
+    complex.style.background = 'var(--purple)'; complex.style.color = 'white'; complex.style.borderColor = 'var(--purple)';
+    simple.style.background = 'var(--bg)'; simple.style.color = 'var(--t2)'; simple.style.borderColor = 'var(--b1)';
+    btnContainer.innerHTML = `
+      <button class="task-btn other">Request More Info</button>
+      <button class="task-btn other" style="color:var(--red);border-color:var(--red);">Decline &amp; Terminate</button>
+      <button class="task-btn other" style="color:var(--red);border-color:var(--red);">Decline &amp; Continue</button>
+      <button class="task-btn success" style="background:var(--green);">Approve</button>
+    `;
+  }
+}
+
+// ─── Phase 1: Selection & Interactivity ──────────
+const buttons = [
+  { label: 'Decline', type: 'error', route: 'End node (terminate)' },
+  { label: 'Decline & Continue', type: 'other', route: 'Next task in workflow' },
+  { label: 'Approve', type: 'success', route: 'Next task in workflow' }
+];
+let selectedBtnIdx = 2;
+
+function selectApprovalSection() {
+  document.querySelectorAll('.canvas-field').forEach(f => f.classList.remove('selected'));
+  document.getElementById('approvalSection').style.boxShadow = '0 0 0 3px var(--purple-light)';
+  document.getElementById('propsPanel').innerHTML = buildApprovalProps();
+}
+
+function selectButton(idx) {
+  selectedBtnIdx = idx;
+  document.querySelectorAll('.canvas-approval-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.canvas-approval-btn')[idx]?.classList.add('selected');
+
+  // Update property inputs
+  const labelInput = document.getElementById('btnLabelInput');
+  const typeSelect = document.getElementById('btnTypeSelect');
+  const routeSelect = document.getElementById('btnRouteSelect');
+  if (labelInput) labelInput.value = buttons[idx]?.label || '';
+  if (typeSelect) typeSelect.value = buttons[idx]?.type || 'other';
+  if (routeSelect) {
+    const route = buttons[idx]?.route || 'Next task in workflow';
+    for (let i = 0; i < routeSelect.options.length; i++) {
+      if (routeSelect.options[i].text === route) { routeSelect.selectedIndex = i; break; }
+    }
+  }
+
+  // Highlight in button list
+  document.querySelectorAll('.props-btn-item').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.props-btn-item')[idx]?.classList.add('selected');
+}
+
+function buildApprovalProps() {
+  const btnListHTML = buttons.map((btn, i) =>
+    `<div class="props-btn-item ${i === selectedBtnIdx ? 'selected' : ''}" onclick="selectButton(${i})">
+      <span class="props-btn-dot ${btn.type}"></span>
+      <span class="props-btn-name">${btn.label}</span>
+      <span class="props-btn-type">${btn.type}</span>
+    </div>`
+  ).join('');
+
+  const btn = buttons[selectedBtnIdx] || buttons[0];
+  return `
+    <div class="props-title">Approval section properties</div>
+    <div class="props-field">
+      <label class="props-label">Buttons (${buttons.length} of 5)</label>
+      <div class="props-btn-list">${btnListHTML}</div>
+      <button class="props-add-btn" style="margin-top:8px" title="Max 5 buttons">+ Add button</button>
+    </div>
+    <div class="props-divider"></div>
+    <div class="props-title" style="font-size:13px;">Button configuration</div>
+    <div class="props-field">
+      <label class="props-label">Label</label>
+      <input class="props-input" id="btnLabelInput" value="${btn.label}" />
+    </div>
+    <div class="props-field">
+      <label class="props-label">Type</label>
+      <select class="props-select" id="btnTypeSelect">
+        <option value="success" ${btn.type === 'success' ? 'selected' : ''}>Success (green)</option>
+        <option value="error" ${btn.type === 'error' ? 'selected' : ''}>Error (red)</option>
+        <option value="other" ${btn.type === 'other' ? 'selected' : ''}>Other (outline)</option>
+      </select>
+    </div>
+    <div class="props-field">
+      <label class="props-label">Routes to</label>
+      <select class="props-select" id="btnRouteSelect">
+        <option>Next task in workflow</option>
+        <option>End node (terminate)</option>
+        <option>Loop back to previous task</option>
+        <option>Specific task...</option>
+      </select>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;">Where the workflow goes when this button is clicked</div>
+    </div>
+    <div class="props-field">
+      <label class="props-label">Comms platform label</label>
+      <input class="props-input" value="${btn.label}" placeholder="Same as label if empty" />
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;">Used for Slack and Teams button text</div>
+    </div>
+    <div class="props-divider"></div>
+    <div class="props-field">
+      <label class="props-label">Rejection note</label>
+      <label class="props-toggle">
+        <span class="props-toggle-track on" onclick="this.classList.toggle('on')"></span>
+        <span class="props-toggle-label">Show "Reason for decision" textarea</span>
+      </label>
+      <div style="font-size:11px;color:var(--t3);margin-top:6px;">Visible to the assignee above the action buttons. Captures reasoning for audit trail.</div>
+    </div>
+  `;
+}
+
+// ─── Phase 1: Drag & Drop ─────────────────────────
+function onApprovalDragStart(e) {
+  e.dataTransfer.setData('text/plain', 'approval-section');
+  e.dataTransfer.effectAllowed = 'copy';
+  e.target.classList.add('dragging');
+  // Highlight drop zone immediately so user sees the target
+  const dz = document.getElementById('approvalDropzone');
+  if (dz) { dz.textContent = 'Drop here to add the Approval section'; }
+}
+
+function onApprovalDragEnd(e) {
+  e.target.classList.remove('dragging');
+  const dz = document.getElementById('approvalDropzone');
+  if (dz) {
+    dz.classList.remove('drag-over');
+    dz.textContent = '⚡ Drag "Approval" from the Sections catalogue to add an approval section';
+  }
+}
+
+function onDropzoneOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+function onDropzoneEnter(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDropzoneLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+function onDropzoneDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (e.dataTransfer.getData('text/plain') === 'approval-section') {
+    addApprovalSection();
+  }
+}
+
+// ─── Phase 1: Add / Remove Approval Section ──────
+function addApprovalSection() {
+  document.getElementById('approvalDropzone').style.display = 'none';
+  const section = document.getElementById('approvalSection');
+  section.style.display = '';
+  section.classList.add('entering');
+  section.addEventListener('animationend', () => section.classList.remove('entering'), { once: true });
+  const cat = document.getElementById('catalogApproval');
+  cat.classList.add('disabled');
+  cat.removeAttribute('onclick');
+  cat.removeAttribute('draggable');
+  selectApprovalSection();
+}
+
+function removeApprovalSection() {
+  document.getElementById('approvalDropzone').style.display = '';
+  const section = document.getElementById('approvalSection');
+  section.style.display = 'none';
+  section.style.boxShadow = '';
+  const cat = document.getElementById('catalogApproval');
+  cat.classList.remove('disabled');
+  cat.setAttribute('onclick', 'addApprovalSection()');
+  cat.setAttribute('draggable', 'true');
+  document.getElementById('propsPanel').innerHTML = `
+    <div style="padding:40px 16px;text-align:center;color:var(--t4);font-size:13px;">
+      <div style="font-size:20px;margin-bottom:8px;">👆</div>
+      Click an element on the canvas to edit its properties
+    </div>
+  `;
+}
+
+function selectCanvasField(el, fieldName) {
+  const approvalEl = document.getElementById('approvalSection');
+  if (approvalEl) approvalEl.style.boxShadow = '';
+  document.querySelectorAll('.canvas-field').forEach(f => f.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('propsPanel').innerHTML = `
+    <div class="props-title">${fieldName}</div>
+    <div class="props-field">
+      <label class="props-label">Field label</label>
+      <input class="props-input" value="${fieldName}" />
+    </div>
+    <div class="props-field">
+      <label class="props-label">Required</label>
+      <label class="props-toggle">
+        <span class="props-toggle-track on" onclick="this.classList.toggle('on')"></span>
+        <span class="props-toggle-label">Require this field</span>
+      </label>
+    </div>
+    <div class="props-field">
+      <label class="props-label">Help text</label>
+      <input class="props-input" placeholder="Add help text..." />
+    </div>
+    <div class="props-divider"></div>
+    <div class="props-field">
+      <label class="props-label">Visibility rules</label>
+      <button class="props-add-btn">+ Add condition</button>
+    </div>
+  `;
+}
+
+// ─── Phase 2: Tab Switching ──────────────────────
+function switchBuilderTab(tabName) {
+  document.querySelectorAll('.p2-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.p2-tab[data-tab="${tabName}"]`)?.classList.add('active');
+  document.querySelectorAll('.p2-tab-content').forEach(c => c.style.display = 'none');
+  const target = document.getElementById('p2-' + tabName);
+  if (target) target.style.display = '';
+}
+</script>
+
+</body>
+</html>

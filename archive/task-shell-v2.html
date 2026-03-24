@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Shell v2 — Slot Model</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ───────────────────────────── */
+:root {
+  --bg:        #f4f5f7;
+  --surface:   #ffffff;
+  --surface-2: #f9fafb;
+  --surface-3: #f3f4f6;
+  --border:    rgba(0,0,0,0.07);
+  --border-2:  rgba(0,0,0,0.11);
+  --border-3:  rgba(0,0,0,0.18);
+
+  --text-1:    rgba(10,15,30,0.92);
+  --text-2:    rgba(10,15,30,0.62);
+  --text-3:    rgba(10,15,30,0.40);
+  --text-4:    rgba(10,15,30,0.22);
+
+  --purple:    #5b21b6;
+  --purple-2:  #7c3aed;
+  --purple-bg: rgba(91,33,182,0.08);
+  --purple-bd: rgba(91,33,182,0.20);
+
+  --green:     #15803d;
+  --green-bg:  rgba(21,128,61,0.08);
+  --green-bd:  rgba(21,128,61,0.20);
+
+  --amber:     #b45309;
+  --amber-bg:  rgba(180,83,9,0.08);
+  --amber-bd:  rgba(180,83,9,0.20);
+
+  --red:       #b91c1c;
+  --red-bg:    rgba(185,28,28,0.07);
+  --red-bd:    rgba(185,28,28,0.18);
+
+  --blue:      #1d4ed8;
+  --blue-bg:   rgba(29,78,216,0.08);
+  --blue-bd:   rgba(29,78,216,0.20);
+
+  --r:    5px;
+  --r-md: 8px;
+  --r-lg: 11px;
+
+  --nav-w:     52px;
+  --panel-w:   292px;
+  --header-h:  50px;
+  --footer-h:  58px;
+  --shell-w:   1440px;
+  --shell-h:   900px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Geist', system-ui, sans-serif;
+  background: #d8dae0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+  font-size: 13px;
+  color: var(--text-1);
+  overflow: hidden;
+}
+
+/* ─── CHROME ──────────────────────────────────── */
+.shell {
+  width: var(--shell-w);
+  height: var(--shell-h);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.switcher-bar {
+  background: #0f1014;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 6px;
+  flex-shrink: 0;
+  border-radius: 12px 12px 0 0;
+}
+.dot { width:11px;height:11px;border-radius:50%; }
+.dot.r{background:#ff5f57;}.dot.y{background:#ffbd2e;}.dot.g{background:#28c840;}
+.switcher-label { font-size:11px;color:rgba(255,255,255,0.25);margin-left:8px;letter-spacing:0.02em; }
+
+.sw-group { margin-left:auto;display:flex;align-items:center;gap:2px; }
+.sw-btn {
+  height:24px;padding:0 10px;border-radius:4px;
+  font-size:11px;font-weight:500;color:rgba(255,255,255,0.35);
+  background:transparent;border:none;cursor:pointer;font-family:inherit;
+  transition:all 0.12s;white-space:nowrap;
+}
+.sw-btn:hover { background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6); }
+.sw-btn.active { background:rgba(91,33,182,0.35);color:#c4b5fd; }
+.sw-sep { width:1px;height:16px;background:rgba(255,255,255,0.08);margin:0 4px; }
+
+/* ─── APP FRAME ───────────────────────────────── */
+.app { display:flex;flex:1;overflow:hidden;background:var(--bg); }
+
+/* ─── LEFT NAV ────────────────────────────────── */
+.nav {
+  width: var(--nav-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.nav-logo {
+  width:30px;height:30px;border-radius:8px;background:var(--purple);
+  display:flex;align-items:center;justify-content:center;margin-bottom:12px;
+}
+.nav-logo svg{width:15px;height:15px;}
+.nav-ic {
+  width:34px;height:34px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-3);cursor:pointer;border:1px solid transparent;
+  transition:all 0.1s;
+}
+.nav-ic:hover{background:var(--surface-3);color:var(--text-2);}
+.nav-ic.on{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd);}
+.nav-ic svg{width:15px;height:15px;stroke-width:1.7;}
+.nav-div{width:24px;height:1px;background:var(--border);margin:5px 0;}
+
+/* ─── TASK CONTAINER ──────────────────────────── */
+.task-container {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-width:0;
+}
+
+/* ══════════════════════════════════════════════
+   SLOT 1: HEADER CHROME
+   Always present. Knows nothing about task type.
+   Receives: title, breadcrumb, status, action buttons
+══════════════════════════════════════════════ */
+.slot-header {
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 10px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.task-type-label {
+  font-size:13px;font-weight:500;color:var(--text-1);
+  white-space:nowrap;
+}
+
+.breadcrumb {
+  display:flex;align-items:center;gap:5px;
+  padding:0 8px;height:24px;
+  background:var(--surface-2);border:1px solid var(--border-2);
+  border-radius:5px;font-size:11px;color:var(--text-2);
+  cursor:pointer;white-space:nowrap;transition:background 0.1s;
+}
+.breadcrumb:hover{background:var(--surface-3);}
+.breadcrumb svg{width:10px;height:10px;flex-shrink:0;}
+
+/* SLOT 1a: HEADER META — injected when body_density="dense" */
+.slot-header-meta {
+  display:flex;align-items:center;gap:8px;
+  padding-left:10px;border-left:1px solid var(--border-2);
+  font-size:12px;color:var(--text-2);
+  flex-shrink:0;
+}
+.meta-chip {
+  display:flex;align-items:center;gap:4px;
+  padding:2px 6px;border-radius:4px;
+  cursor:pointer;transition:background 0.1s;white-space:nowrap;
+}
+.meta-chip:hover{background:var(--surface-3);}
+.meta-chip svg{width:11px;height:11px;color:var(--text-3);}
+.meta-sep{width:1px;height:12px;background:var(--border-2);}
+
+.av-xs {
+  width:16px;height:16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:600;flex-shrink:0;
+}
+.av-sm {
+  width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:600;flex-shrink:0;
+}
+
+.header-end { margin-left:auto;display:flex;align-items:center;gap:5px; }
+
+.status-pill {
+  display:inline-flex;align-items:center;gap:5px;
+  height:22px;padding:0 8px;border-radius:11px;
+  font-size:11px;font-weight:500;white-space:nowrap;
+}
+.sp-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+
+.ic-btn {
+  width:30px;height:30px;border-radius:5px;
+  border:1px solid var(--border-2);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text-3);transition:all 0.12s;
+  position:relative;flex-shrink:0;
+}
+.ic-btn:hover{background:var(--surface-3);color:var(--text-2);}
+.ic-btn.on{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd);}
+.ic-btn svg{width:14px;height:14px;}
+.ic-dot {
+  position:absolute;top:4px;right:4px;
+  width:5px;height:5px;border-radius:50%;
+  background:var(--purple-2);border:1.5px solid var(--surface);
+}
+
+/* ══════════════════════════════════════════════
+   MAIN ROW: body + panel side by side
+══════════════════════════════════════════════ */
+.main-row { flex:1;display:flex;overflow:hidden; }
+
+/* ══════════════════════════════════════════════
+   SLOT 2: BODY
+   Receives: ordered zone list from form definition.
+   Never knows what those zones contain.
+══════════════════════════════════════════════ */
+.slot-body {
+  flex:1;
+  overflow-y:auto;
+  background:var(--bg);
+  min-width:0;
+}
+.slot-body::-webkit-scrollbar{width:3px;}
+.slot-body::-webkit-scrollbar-thumb{background:var(--border-3);border-radius:2px;}
+
+.body-inner {
+  max-width:700px;
+  margin:0 auto;
+  padding:28px 24px;
+}
+
+.task-title {
+  font-size:19px;font-weight:500;
+  letter-spacing:-0.025em;line-height:1.3;
+  color:var(--text-1);margin-bottom:10px;
+}
+
+/* SLOT 2a: BODY META — injected when body_density="sparse" */
+.slot-body-meta {
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:20px;font-size:12px;color:var(--text-2);
+}
+.bm-item {
+  display:flex;align-items:center;gap:4px;
+  padding:3px 7px;border-radius:4px;cursor:pointer;
+  border:1px solid transparent;transition:all 0.1s;
+}
+.bm-item:hover{background:var(--surface);border-color:var(--border-2);}
+.bm-item svg{width:11px;height:11px;color:var(--text-3);}
+.bm-sep{width:1px;height:12px;background:var(--border-2);}
+
+/* ── ZONE CARDS ───────────────────────────── */
+.zone {
+  background:var(--surface);
+  border:1px solid var(--border-2);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.zone:last-child{margin-bottom:0;}
+
+.zone-body{padding:16px 18px;}
+
+/* vendor row */
+.vendor-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.vendor-logo{
+  width:32px;height:32px;border-radius:7px;
+  background:var(--surface-3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;
+}
+.vendor-name{font-size:14px;font-weight:500;color:var(--text-1);}
+.vendor-sub{font-size:11px;color:var(--text-3);margin-top:1px;}
+
+/* data grid */
+.data-grid{display:grid;gap:14px;padding-top:12px;border-top:1px solid var(--border);}
+.dg-3{grid-template-columns:repeat(3,1fr);}
+.dg-4{grid-template-columns:repeat(4,1fr);}
+.dg-2{grid-template-columns:repeat(2,1fr);}
+.data-label{font-size:11px;color:var(--text-3);margin-bottom:2px;}
+.data-val{font-size:13px;font-weight:500;color:var(--text-1);line-height:1.3;}
+.data-val.warn{color:var(--amber);}
+.data-val.danger{color:var(--red);}
+.data-val.good{color:var(--green);}
+
+/* accordion */
+.acc-trigger {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 0;border-top:1px solid var(--border);margin-top:10px;
+  cursor:pointer;font-size:12px;color:var(--text-3);user-select:none;transition:color 0.1s;
+}
+.acc-trigger:hover{color:var(--text-2);}
+.acc-trigger svg{width:12px;height:12px;transition:transform 0.2s;flex-shrink:0;}
+.acc-trigger.open svg{transform:rotate(180deg);}
+.acc-content{display:none;font-size:12px;color:var(--text-2);line-height:1.6;padding:8px 0 2px;}
+.acc-content.open{display:block;}
+
+/* offer tabs */
+.offer-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 18px;}
+.o-tab{
+  height:34px;padding:0 10px;font-size:12px;font-weight:500;
+  color:var(--text-3);border-bottom:2px solid transparent;
+  cursor:pointer;background:none;border-left:none;border-right:none;border-top:none;
+  font-family:inherit;transition:all 0.12s;white-space:nowrap;
+}
+.o-tab.on{color:var(--purple);border-bottom-color:var(--purple);}
+.o-tab:hover:not(.on){color:var(--text-2);}
+.o-tab-add{
+  display:flex;align-items:center;height:34px;padding:0 6px;
+  font-size:11px;color:var(--text-4);background:none;border:none;
+  font-family:inherit;cursor:pointer;transition:color 0.1s;gap:3px;
+}
+.o-tab-add:hover{color:var(--text-3);}
+.o-tab-add svg{width:10px;height:10px;}
+
+/* form fields */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 18px;}
+.form-grid.fg-1{grid-template-columns:1fr;}
+.f-field{display:flex;flex-direction:column;gap:4px;}
+.f-field.full{grid-column:1/-1;}
+.f-label{font-size:11px;font-weight:500;color:var(--text-2);}
+.req{color:var(--red);font-size:10px;}
+input.fi, select.fi, textarea.fi {
+  height:30px;padding:0 9px;border:1px solid var(--border-2);border-radius:var(--r);
+  font-family:inherit;font-size:12px;color:var(--text-2);
+  background:var(--surface);outline:none;transition:border-color 0.12s;width:100%;
+}
+textarea.fi{height:72px;padding:8px 9px;resize:vertical;}
+input.fi:focus,select.fi:focus,textarea.fi:focus{
+  border-color:var(--purple-2);box-shadow:0 0 0 2.5px rgba(124,58,237,0.10);
+}
+select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:22px;}
+
+/* upload drop */
+.upload-zone{
+  border:1px dashed var(--border-2);border-radius:var(--r-md);
+  padding:16px;text-align:center;background:var(--surface-2);
+  cursor:pointer;transition:all 0.12s;margin:0 18px 0;
+}
+.upload-zone:hover{background:var(--surface-3);border-color:var(--purple-2);}
+.uz-title{font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:2px;}
+.uz-sub{font-size:11px;color:var(--text-4);margin-bottom:6px;}
+.ai-chip{
+  display:inline-flex;align-items:center;gap:3px;
+  height:19px;padding:0 6px;background:var(--purple-bg);
+  color:var(--purple);border:none;border-radius:4px;
+  font-size:10px;font-weight:500;font-family:inherit;cursor:pointer;
+}
+
+/* section label */
+.section-label{font-size:12px;font-weight:500;color:var(--text-1);margin-bottom:10px;}
+
+/* info prose */
+.info-prose{padding:16px 18px;font-size:13px;color:var(--text-2);line-height:1.75;}
+.info-prose p{margin-bottom:10px;}
+.info-prose p:last-child{margin-bottom:0;}
+
+/* checklist */
+.checklist{display:flex;flex-direction:column;gap:7px;padding:0 18px 16px;}
+.check-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text-2);}
+.check-circ{
+  width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border-2);
+  flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;
+}
+.check-circ.done{background:var(--green-bg);border-color:var(--green);}
+.check-circ.done svg{width:8px;height:8px;color:var(--green);}
+
+/* ══════════════════════════════════════════════
+   SLOT 3: PANEL
+   Receives: ordered array of panel-section objects.
+   Each section has: id, icon, label, content, hasInput.
+   The shell renders the icon buttons automatically.
+   Comments is just one panel section type.
+══════════════════════════════════════════════ */
+.slot-panel {
+  width: var(--panel-w);
+  min-width: var(--panel-w);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Animated open/close */
+  transition: width 0.18s ease, min-width 0.18s ease, opacity 0.15s ease;
+}
+.slot-panel.closed {
+  width: 0;
+  min-width: 0;
+  opacity: 0;
+  border-left: none;
+  overflow: hidden;
+}
+
+/* Panel section */
+.panel-section { display:none;flex-direction:column;flex:1;overflow:hidden; }
+.panel-section.visible { display:flex; }
+
+.panel-section-header {
+  height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.panel-section-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--purple);
+  border-bottom: 2px solid var(--purple);
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.panel-scroll {
+  flex:1;overflow-y:auto;padding:14px 16px;
+}
+.panel-scroll::-webkit-scrollbar{width:3px;}
+.panel-scroll::-webkit-scrollbar-thumb{background:var(--border-3);}
+
+/* Details content */
+.detail-group{margin-bottom:18px;}
+.dg-title{
+  font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;
+  color:var(--text-4);margin-bottom:8px;
+}
+.detail-row{
+  display:flex;flex-direction:column;gap:2px;
+  padding:6px 0;border-bottom:1px solid var(--border);
+}
+.detail-row:last-child{border-bottom:none;}
+.dr-label{font-size:11px;color:var(--text-3);}
+.dr-val{font-size:12px;font-weight:500;color:var(--text-1);display:flex;align-items:center;gap:4px;}
+
+/* Workflow steps */
+.wf-wrap{display:flex;flex-direction:column;}
+.wf-row{display:flex;align-items:flex-start;gap:7px;}
+.wf-col{display:flex;flex-direction:column;align-items:center;width:14px;}
+.wf-dot{
+  width:9px;height:9px;border-radius:50%;border:2px solid var(--border-2);
+  background:var(--surface);flex-shrink:0;margin-top:3px;
+}
+.wf-dot.done{background:var(--green);border-color:var(--green);}
+.wf-dot.now{background:var(--purple-2);border-color:var(--purple-2);}
+.wf-line{width:1px;flex:1;min-height:10px;background:var(--border-2);}
+.wf-label{font-size:11px;color:var(--text-3);padding:1px 0 10px;line-height:1.4;}
+.wf-label.now{color:var(--text-1);font-weight:500;}
+
+/* Comments */
+.comment-item{display:flex;gap:7px;padding:9px 0;border-bottom:1px solid var(--border);}
+.comment-item:last-child{border-bottom:none;}
+.c-av{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:600;flex-shrink:0;color:var(--text-2);
+}
+.c-meta{display:flex;align-items:baseline;gap:5px;margin-bottom:2px;}
+.c-name{font-size:11px;font-weight:500;color:var(--text-1);}
+.c-time{font-size:10px;color:var(--text-4);}
+.c-role{font-size:10px;color:var(--text-3);margin-bottom:2px;}
+.c-text{font-size:12px;color:var(--text-2);line-height:1.5;}
+
+.comment-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 16px;gap:6px;text-align:center;color:var(--text-4);
+}
+.comment-empty svg{width:22px;height:22px;opacity:0.25;margin-bottom:2px;}
+.comment-empty p{font-size:11px;line-height:1.5;}
+
+/* Panel input footer */
+.panel-input-row{
+  padding:10px 12px;border-top:1px solid var(--border);
+  display:flex;gap:6px;align-items:center;flex-shrink:0;
+}
+.panel-input{
+  flex:1;height:32px;padding:0 9px;
+  border:1px solid var(--border-2);border-radius:var(--r);
+  font-family:inherit;font-size:12px;color:var(--text-2);
+  background:var(--surface-2);outline:none;transition:all 0.12s;
+}
+.panel-input:focus{border-color:var(--purple-2);background:var(--surface);}
+.send-btn{
+  width:30px;height:30px;border-radius:var(--r);
+  background:var(--purple);border:none;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+}
+.send-btn svg{width:12px;height:12px;}
+
+/* AI panel */
+.ai-insight-card{
+  background:linear-gradient(135deg,rgba(91,33,182,0.05),rgba(124,58,237,0.08));
+  border:1px solid var(--purple-bd);border-radius:var(--r-md);
+  padding:12px;margin-bottom:10px;
+}
+.ai-header{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.ai-icon{width:14px;height:14px;color:var(--purple-2);}
+.ai-title{font-size:11px;font-weight:500;color:var(--purple);}
+.ai-body{font-size:12px;color:var(--text-2);line-height:1.55;}
+.ai-conf{
+  display:inline-flex;align-items:center;gap:3px;
+  height:16px;padding:0 5px;background:var(--purple-bg);
+  border-radius:3px;font-size:10px;color:var(--purple);font-weight:500;margin-top:6px;
+}
+
+/* ══════════════════════════════════════════════
+   SLOT 4: ACTIONS
+   Receives: action[] where each action has
+   { label, role: "primary"|"secondary"|"destructive", handler }
+   Shell positions by role — never by task type.
+══════════════════════════════════════════════ */
+.slot-actions {
+  height: var(--footer-h);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+
+.actions-secondary { display:flex;gap:7px; }
+.actions-primary   { margin-left:auto;display:flex;gap:7px; }
+
+.btn {
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  height:32px;padding:0 14px;border-radius:var(--r);
+  font-size:13px;font-weight:500;font-family:inherit;
+  cursor:pointer;transition:all 0.12s;border:none;white-space:nowrap;
+}
+.btn-ghost{background:transparent;color:var(--text-2);border:1px solid var(--border-2);}
+.btn-ghost:hover{background:var(--surface-3);color:var(--text-1);}
+.btn-destructive{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
+.btn-destructive:hover{background:rgba(185,28,28,0.12);}
+.btn-primary{background:var(--purple);color:#fff;border:1px solid var(--purple);}
+.btn-primary:hover{background:var(--purple-2);}
+
+/* ─── STATUS VARIANTS ─────────────────────────── */
+.sp-pending{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.sp-pending .sp-dot{background:var(--amber);}
+.sp-action{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);}
+.sp-action .sp-dot{background:var(--purple-2);}
+.sp-info{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);}
+.sp-info .sp-dot{background:var(--blue);}
+
+/* ─── ANNOTATION SYSTEM ───────────────────────── */
+/* Shown in prototype mode to explain the slot model */
+.ann-bar {
+  background:#0f1014;
+  padding:7px 18px;
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:rgba(255,255,255,0.4);
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  flex-shrink:0;
+}
+.ann-tag{
+  display:inline-flex;align-items:center;gap:3px;
+  height:18px;padding:0 6px;border-radius:3px;
+  font-size:10px;font-weight:600;letter-spacing:0.04em;
+  font-family:'Geist',monospace;
+}
+.ann-slot  {background:rgba(124,58,237,0.2);color:#c4b5fd;}
+.ann-config{background:rgba(21,128,61,0.2);color:#86efac;}
+.ann-rule  {background:rgba(180,83,9,0.2);color:#fcd34d;}
+
+/* ─── SCROLLBAR GLOBAL ───────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-3);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SWITCHER -->
+  <div class="switcher-bar">
+    <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+    <span class="switcher-label">Task Shell v2 — Slot Model</span>
+    <div class="sw-group">
+      <button class="sw-btn active" onclick="loadTask('approval',this)">Simple Approval</button>
+      <button class="sw-btn" onclick="loadTask('offer',this)">Offer Task</button>
+      <button class="sw-btn" onclick="loadTask('finance',this)">Finance Approval</button>
+      <button class="sw-btn" onclick="loadTask('info',this)">Info / Acknowledge</button>
+      <div class="sw-sep"></div>
+      <button class="sw-btn" onclick="loadTask('custom',this)">+ Custom Task</button>
+    </div>
+  </div>
+
+  <div class="app">
+
+    <!-- LEFT NAV -->
+    <nav class="nav">
+      <div class="nav-logo">
+        <svg viewBox="0 0 24 24" fill="white" stroke="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <div class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="nav-ic on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div>
+      <div class="nav-div"></div>
+      <div class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    </nav>
+
+    <!-- TASK CONTAINER — the shell. Never modified per task type. -->
+    <div class="task-container">
+
+      <!-- ANN BAR: slot model annotation (prototype only) -->
+      <div class="ann-bar" id="ann-bar">
+        <span class="ann-tag ann-slot">SLOT 1</span>
+        <span id="ann-text">header-chrome + header-meta</span>
+        <span style="margin-left:auto;opacity:0.5;">form_definition drives all slots → shell unchanged</span>
+      </div>
+
+      <!-- ══════════════════════════════
+           SLOT 1: HEADER CHROME
+      ══════════════════════════════ -->
+      <div class="slot-header">
+        <span class="task-type-label" id="s-type">Manager Approval</span>
+
+        <div class="breadcrumb">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg>
+          <span id="s-breadcrumb">Google New Purchase</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><path d="M21 3L9 15"/></svg>
+        </div>
+
+        <!-- SLOT 1a: HEADER META (injected when density=dense) -->
+        <div class="slot-header-meta" id="s-header-meta" style="display:none;">
+          <div class="meta-chip" id="s-hm-assignee">
+            <div class="av-xs" id="s-hm-av" style="background:#ede9fe;color:#5b21b6;">AC</div>
+            <span id="s-hm-name">Alex Chen</span>
+          </div>
+          <div class="meta-sep"></div>
+          <div class="meta-chip" id="s-hm-due">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="s-hm-date">Due Mar 29</span>
+          </div>
+        </div>
+
+        <div class="header-end">
+          <div id="s-status-pill"></div>
+          <!-- Panel icon buttons are rendered by JS from panel sections array -->
+          <div id="s-panel-btns" style="display:flex;gap:5px;"></div>
+          <button class="ic-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN ROW -->
+      <div class="main-row">
+
+        <!-- ══════════════════════════
+             SLOT 2: BODY
+        ══════════════════════════ -->
+        <div class="slot-body">
+          <div class="body-inner">
+
+            <div class="task-title" id="s-title">Loading…</div>
+
+            <!-- SLOT 2a: BODY META (injected when density=sparse) -->
+            <div class="slot-body-meta" id="s-body-meta" style="display:none;">
+              <div class="bm-item">
+                <div class="av-sm" id="s-bm-av" style="background:#ede9fe;color:#5b21b6;">AC</div>
+                <span id="s-bm-name">Alex Chen (You)</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </div>
+              <div class="bm-sep"></div>
+              <div class="bm-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span id="s-bm-date">Due Mar 29, 2026</span>
+              </div>
+            </div>
+
+            <!-- SLOT 2b: ZONES — injected from form definition -->
+            <div id="s-zones"></div>
+
+          </div>
+        </div>
+
+        <!-- ══════════════════════════
+             SLOT 3: PANEL
+             Driven entirely by panelSections[]
+             in form definition. Zero hardcoding.
+        ══════════════════════════ -->
+        <div class="slot-panel closed" id="s-panel">
+          <!-- panel sections injected by JS -->
+        </div>
+
+      </div><!-- /main-row -->
+
+      <!-- ══════════════════════════
+           SLOT 4: ACTIONS
+           Driven by actions[] in form definition.
+           Positions by role, not task type.
+      ══════════════════════════ -->
+      <div class="slot-actions">
+        <div class="actions-secondary" id="s-actions-secondary"></div>
+        <div class="actions-primary"   id="s-actions-primary"></div>
+      </div>
+
+    </div><!-- /task-container -->
+  </div><!-- /app -->
+</div><!-- /shell -->
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   FORM DEFINITIONS
+   This is the only place that changes per task type.
+   The shell HTML above never changes.
+
+   Each definition declares:
+   - type, breadcrumb, title
+   - assignee, dueDate
+   - body_density: "sparse" | "dense"  (explicit, not inferred)
+   - status: { label, variant }
+   - zones: zone components for the body
+   - panelSections: ordered list of panel sections
+   - actions: typed button list
+══════════════════════════════════════════════════════════════ */
+
+const TASK_DEFINITIONS = {
+
+  /* ─── Simple Manager Approval ──────────────────── */
+  approval: {
+    type: 'Manager Approval',
+    breadcrumb: 'Google New Purchase',
+    title: 'Approve SaaS renewal request for Google',
+    assignee: { initials:'AC', name:'Alex Chen (You)', bg:'#ede9fe', fg:'#5b21b6' },
+    dueDate: 'Mar 29, 2026',
+    body_density: 'sparse',   // meta → body
+    status: { label:'Action required', variant:'sp-action' },
+    annotation: 'body_density="sparse" → meta in body · 2 zones · panel has Details + Comments',
+
+    zones: [
+      { type:'vendor-card', vendor:'Google', logo:'🔵',
+        data:[ ['Total Amount','$92,000'], ['Rolling Frequency','Quarterly'], ['Contract Date','24 Mar 2026'] ],
+        accordion:'Request Details',
+        accordionContent:'"Need Google Workspace to support remote collaboration across EMEA teams. Renewal for 250 seats."'
+      },
+      { type:'reason', label:'Reason for your decision' }
+    ],
+
+    panelSections: [
+      { id:'details', icon:'details', label:'Details', hasInput:false, content:{
+          type:'details',
+          groups:[
+            { title:'Request', rows:[ ['Vendor','Google'], ['Requestor','Tom Hartley'], ['Total amount','$92,000'], ['Cost centre','CC-SALES-001'], ['Contract start','24 Mar 2026'] ] },
+            { title:'Workflow', steps:[ {state:'done',label:'Intake submitted'}, {state:'now',label:'Manager Approval ← you'}, {state:'',label:'Finance Review'}, {state:'',label:'Legal Sign-off'} ] },
+            { title:'Documents', rows:[ ['Attached files','0 files'] ] }
+          ]
+        }
+      },
+      { id:'comments', icon:'comments', label:'Comments', hasInput:true, dotCount:4, content:{
+          type:'comments',
+          items:[
+            { av:'KW', avBg:'#e0e7ff', avFg:'#4338ca', name:'Kristina Wilkins', time:'6d ago', role:'', text:'Hi Olivia, thank you for all this information and the negotiation. I have booked in something with the team' },
+            { av:'OW', avBg:'#fce7f3', avFg:'#9d174d', name:'Olivia Wilson', time:'1d ago', role:'Senior Project Manager', text:'Hi Kristina, thank you for all this information and the negotiation. I have booked in something with the team' },
+            { av:'KW', avBg:'#e0e7ff', avFg:'#4338ca', name:'Kristina Wilkins', time:'6d ago', role:'', text:'Hi Olivia, thank you for all this information and the negotiation. I have booked in something with the team' },
+            { av:'OW', avBg:'#fce7f3', avFg:'#9d174d', name:'Olivia Wilson', time:'1d ago', role:'Senior Project Manager', text:'Hi Kristina, thank you for all this information and the negotiation. I have booked in something with the team' },
+          ]
+        }
+      }
+    ],
+    defaultPanel: 'details',
+
+    actions: [
+      { label:'Decline', role:'destructive' },
+      { label:'Approve', role:'primary' }
+    ]
+  },
+
+  /* ─── Offer Task ───────────────────────────────── */
+  offer: {
+    type: 'Offer Details',
+    breadcrumb: 'Google New Purchase',
+    title: 'Submit offer for Google Workspace renewal',
+    assignee: { initials:'AC', name:'Alex Chen (You)', bg:'#ede9fe', fg:'#5b21b6' },
+    dueDate: 'Mar 29',
+    body_density: 'dense',    // meta → header
+    status: { label:'In progress', variant:'sp-info' },
+    annotation: 'body_density="dense" → meta in header · 3 zones · Details default open',
+
+    zones: [
+      { type:'vendor-card', vendor:'Google', logo:'🔵',
+        data:[ ['Total Amount','$92,000'], ['Rolling Frequency','Quarterly'], ['Contract Date','24 Mar 2026'] ],
+        accordion:'Request Details',
+        accordionContent:'"Need Google Workspace for 250 seats across EMEA." — Tom Hartley, VP Sales'
+      },
+      { type:'offer-tabs',
+        tabs:['Offer A: Workspace Pro', 'Offer B: Business Starter'],
+        fields:[
+          { label:'Offer Name', span:'full', placeholder:'e.g. Google Workspace Pro Annual' },
+          { label:'Rolling Frequency', type:'select', options:['Annual','Quarterly','Monthly'] },
+          { label:'Currency', type:'select', options:['USD','GBP','EUR'] },
+          { label:'Contract Start Date', placeholder:'DD/MM/YYYY' },
+          { label:'Contract End Date', placeholder:'DD/MM/YYYY' },
+          { label:'Total Value', placeholder:'e.g. 92000' }
+        ]
+      },
+      { type:'reason', label:'Reason for your decision' }
+    ],
+
+    panelSections: [
+      { id:'details', icon:'details', label:'Details', hasInput:false, content:{
+          type:'details',
+          groups:[
+            { title:'Request', rows:[ ['Vendor','Google'], ['Requestor','Tom Hartley (VP Sales)'], ['Total amount','$92,000'], ['Cost centre','CC-SALES-001'] ] },
+            { title:'Workflow', steps:[ {state:'done',label:'Manager Approval'}, {state:'now',label:'Offer Collection ← you'}, {state:'',label:'Legal Sign-off'} ] },
+            { title:'Documents', rows:[ ['Attached','0 files'] ] }
+          ]
+        }
+      },
+      { id:'comments', icon:'comments', label:'Comments', hasInput:true, dotCount:0, content:{
+          type:'comments', items:[]
+        }
+      }
+    ],
+    defaultPanel: 'details',
+
+    actions: [
+      { label:'Save draft', role:'secondary' },
+      { label:'Submit offer', role:'primary' }
+    ]
+  },
+
+  /* ─── Finance Approval ─────────────────────────── */
+  finance: {
+    type: 'Finance Approval',
+    breadcrumb: 'Salesforce Enterprise',
+    title: 'Approve Salesforce Enterprise — $240,000 annual spend',
+    assignee: { initials:'SR', name:'Sarah Reeves (CFO)', bg:'#fff7ed', fg:'#c2410c' },
+    dueDate: 'Tomorrow ⚡',
+    dueDateUrgent: true,
+    body_density: 'dense',
+    status: { label:'Pending', variant:'sp-pending' },
+    annotation: 'body_density="dense" + dueDate urgency override → amber date in header · AI Insights panel section',
+
+    zones: [
+      { type:'vendor-card', vendor:'Salesforce', logo:'☁️',
+        data4:[ ['Total Spend','$240,000'], ['Budget Left','$18,500','warn'], ['Risk Level','High','danger'], ['YoY Increase','+23%','danger'] ],
+        accordion:'Line items & justification',
+        accordionContent:'Enterprise CRM License (50 seats) — $180,000\nImplementation & Training — $60,000\n\nJustification: "Need CRM to support EMEA sales growth."'
+      },
+      { type:'prev-contract',
+        data:[ ['Previous Spend','$195,000'], ['Contract End','31 Mar 2026'], ['Savings Achieved','$12,000','good'] ]
+      },
+      { type:'reason', label:'Reason for your decision' }
+    ],
+
+    panelSections: [
+      { id:'ai', icon:'ai', label:'AI Insights', hasInput:false, content:{
+          type:'ai',
+          insights:[
+            { title:'Spend anomaly detected', conf:'87% confidence', body:'This renewal is 23% above the market benchmark for equivalent Salesforce Enterprise contracts (50 seats, EMEA). Comparable deals average $195k.' },
+            { title:'Negotiation window', conf:'92% confidence', body:'Salesforce contracts of this size typically have 8–12% negotiation headroom. Based on Tom Hartley\'s submission timeline, the contract window closes in 4 days.' }
+          ]
+        }
+      },
+      { id:'details', icon:'details', label:'Details', hasInput:false, content:{
+          type:'details',
+          groups:[
+            { title:'Request', rows:[ ['Requestor','Tom Hartley (VP Sales)'], ['Cost centre','CC-SALES-002'], ['Contract start','1 Apr 2026'] ] },
+            { title:'Workflow', steps:[ {state:'done',label:'Manager Approval'}, {state:'done',label:'Legal Review'}, {state:'now',label:'Finance Approval ← you'} ] }
+          ]
+        }
+      },
+      { id:'comments', icon:'comments', label:'Comments', hasInput:true, dotCount:2, content:{
+          type:'comments',
+          items:[
+            { av:'TH', avBg:'#ecfdf5', avFg:'#065f46', name:'Tom Hartley', time:'2d ago', role:'VP Sales', text:'Budget variance is due to 5 additional seats added by Sales Ops last week.' },
+            { av:'LR', avBg:'#eff6ff', avFg:'#1d4ed8', name:'Legal Review', time:'1d ago', role:'', text:'Approved from legal side. MSA has been signed.' }
+          ]
+        }
+      }
+    ],
+    defaultPanel: 'ai',
+
+    actions: [
+      { label:'Request more info', role:'secondary' },
+      { label:'Decline', role:'destructive' },
+      { label:'Approve', role:'primary' }
+    ]
+  },
+
+  /* ─── Info / Acknowledge ───────────────────────── */
+  info: {
+    type: 'Information Task',
+    breadcrumb: 'IT Security Onboarding',
+    title: 'Review and acknowledge the new data retention policy',
+    assignee: { initials:'MK', name:'Mike K. (IT Head)', bg:'#f0fdf4', fg:'#15803d' },
+    dueDate: 'Apr 5, 2026',
+    body_density: 'sparse',
+    status: { label:'Action required', variant:'sp-action' },
+    annotation: 'body_density="sparse" · 1 zone (content card) · no panel sections → panel absent, full width body',
+
+    zones: [
+      { type:'info-content',
+        prose:'As part of our ISO 27001 compliance programme, all employees and contractors with access to Vertice systems are required to review and acknowledge the updated <strong>Data Retention & Disposal Policy v2.3</strong>, effective 1 April 2026.',
+        checks:[
+          { done:true,  text:'Contract data retention reduced from 7 to 5 years for non-regulated entities' },
+          { done:true,  text:'New mandatory annual audit trail for all spend over £50k' },
+          { done:false, text:'Automated deletion schedule now applies to sandbox and test environments' },
+          { done:false, text:'Right to erasure requests must be processed within 48h (previously 72h)' }
+        ],
+        link:'Data_Retention_Policy_v2.3.pdf'
+      }
+    ],
+
+    panelSections: [],   // ← empty array = no panel rendered at all
+    defaultPanel: null,
+
+    actions: [
+      { label:'Mark as complete', role:'primary' }
+    ]
+  },
+
+  /* ─── Custom / Future Task (demonstrates extensibility) ─── */
+  custom: {
+    type: 'External Review',
+    breadcrumb: 'Stripe API Integration',
+    title: 'Complete security questionnaire for Stripe',
+    assignee: { initials:'JB', name:'Jamal Brown (Sec)', bg:'#faf5ff', fg:'#7c3aed' },
+    dueDate: 'Apr 12, 2026',
+    body_density: 'sparse',
+    status: { label:'Pending', variant:'sp-pending' },
+    annotation: 'Custom task type — no code changes to shell. New panelSection type "documents" added.',
+
+    zones: [
+      { type:'vendor-card', vendor:'Stripe', logo:'💳',
+        data:[ ['Contract value','$36,000/yr'], ['Type','API Integration'], ['Risk tier','Medium'] ],
+        accordion:'Security requirements',
+        accordionContent:'SOC 2 Type II report required. GDPR DPA must be countersigned. PCI-DSS compliance questionnaire (SAQ-D) must be completed by IT security lead.'
+      },
+      { type:'reason', label:'Notes for the security team' }
+    ],
+
+    panelSections: [
+      { id:'documents', icon:'docs', label:'Documents', hasInput:false, content:{
+          type:'documents',
+          files:[
+            { name:'Stripe_Security_Questionnaire.pdf', size:'234 KB', status:'pending' },
+            { name:'SOC2_Report_2025.pdf', size:'1.2 MB', status:'uploaded' },
+            { name:'DPA_Template.docx', size:'88 KB', status:'pending' }
+          ]
+        }
+      },
+      { id:'details', icon:'details', label:'Details', hasInput:false, content:{
+          type:'details',
+          groups:[
+            { title:'Vendor', rows:[ ['Name','Stripe'], ['Website','stripe.com'], ['Risk tier','Medium'] ] },
+            { title:'Workflow', steps:[ {state:'done',label:'Vendor Onboarding'}, {state:'now',label:'Security Review ← you'}, {state:'',label:'Legal Approval'}, {state:'',label:'Final Sign-off'} ] }
+          ]
+        }
+      },
+      { id:'comments', icon:'comments', label:'Comments', hasInput:true, dotCount:0, content:{ type:'comments', items:[] } }
+    ],
+    defaultPanel: 'documents',
+
+    actions: [
+      { label:'Flag for review', role:'secondary' },
+      { label:'Submit', role:'primary' }
+    ]
+  }
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   SHELL RENDERER
+   This function reads a form definition and populates the slots.
+   It never switches on task type — only on structural properties.
+══════════════════════════════════════════════════════════════ */
+
+let currentPanelSection = null;
+
+function loadTask(key, btn) {
+  const def = TASK_DEFINITIONS[key];
+  if (!def) return;
+
+  // Update switcher
+  document.querySelectorAll('.sw-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  // ── SLOT 1: header chrome ─────────────────────
+  document.getElementById('s-type').textContent = def.type;
+  document.getElementById('s-breadcrumb').textContent = def.breadcrumb;
+
+  // Status pill
+  const sp = document.getElementById('s-status-pill');
+  sp.innerHTML = `<div class="status-pill ${def.status.variant}"><div class="sp-dot"></div>${def.status.label}</div>`;
+
+  // ── SLOT 1a: header meta (dense only) ─────────
+  const headerMeta = document.getElementById('s-header-meta');
+  const bodyMeta   = document.getElementById('s-body-meta');
+
+  if (def.body_density === 'dense') {
+    headerMeta.style.display = 'flex';
+    bodyMeta.style.display   = 'none';
+    document.getElementById('s-hm-av').textContent = def.assignee.initials;
+    document.getElementById('s-hm-av').style.background = def.assignee.bg;
+    document.getElementById('s-hm-av').style.color = def.assignee.fg;
+    document.getElementById('s-hm-name').textContent = def.assignee.name.replace(' (You)','');
+    const dueDateEl = document.getElementById('s-hm-due');
+    dueDateEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span style="color:${def.dueDateUrgent ? 'var(--amber)' : 'inherit'};font-weight:${def.dueDateUrgent ? '500' : '400'}">Due ${def.dueDate}</span>`;
+  } else {
+    headerMeta.style.display = 'none';
+    bodyMeta.style.display   = 'flex';
+    document.getElementById('s-bm-av').textContent = def.assignee.initials;
+    document.getElementById('s-bm-av').style.background = def.assignee.bg;
+    document.getElementById('s-bm-av').style.color = def.assignee.fg;
+    document.getElementById('s-bm-name').textContent = def.assignee.name;
+    document.getElementById('s-bm-date').textContent = 'Due ' + def.dueDate;
+  }
+
+  // ── SLOT 2: title ──────────────────────────────
+  document.getElementById('s-title').innerHTML = def.title;
+
+  // ── SLOT 2b: zones ────────────────────────────
+  document.getElementById('s-zones').innerHTML = renderZones(def.zones);
+  // Re-attach accordion listeners
+  document.querySelectorAll('.acc-trigger').forEach(t => {
+    t.addEventListener('click', () => {
+      t.classList.toggle('open');
+      t.nextElementSibling.classList.toggle('open');
+    });
+  });
+
+  // ── SLOT 3: panel ──────────────────────────────
+  const panelEl = document.getElementById('s-panel');
+  const btnContainer = document.getElementById('s-panel-btns');
+  panelEl.innerHTML = '';
+  btnContainer.innerHTML = '';
+  currentPanelSection = null;
+
+  if (def.panelSections.length === 0) {
+    // No panel sections → close panel, no buttons
+    panelEl.classList.add('closed');
+  } else {
+    // Render each panel section (hidden initially)
+    def.panelSections.forEach(sec => {
+      const secEl = document.createElement('div');
+      secEl.className = 'panel-section';
+      secEl.id = 'ps-' + sec.id;
+      secEl.innerHTML = renderPanelSection(sec);
+      panelEl.appendChild(secEl);
+
+      // Icon button for this section
+      const btn2 = document.createElement('button');
+      btn2.className = 'ic-btn';
+      btn2.id = 'pbtn-' + sec.id;
+      btn2.title = sec.label;
+      btn2.innerHTML = getPanelIcon(sec.icon) + (sec.dotCount > 0 ? '<span class="ic-dot"></span>' : '');
+      btn2.addEventListener('click', () => togglePanelSection(sec.id, def.panelSections));
+      btnContainer.appendChild(btn2);
+    });
+
+    // Open default panel section
+    if (def.defaultPanel) {
+      openPanelSection(def.defaultPanel, def.panelSections);
+    } else {
+      panelEl.classList.add('closed');
+    }
+  }
+
+  // ── SLOT 4: actions ───────────────────────────
+  const secActions = document.getElementById('s-actions-secondary');
+  const priActions = document.getElementById('s-actions-primary');
+  secActions.innerHTML = '';
+  priActions.innerHTML = '';
+
+  def.actions.forEach(action => {
+    const b = document.createElement('button');
+    b.className = 'btn btn-' + (action.role === 'primary' ? 'primary' : action.role === 'destructive' ? 'destructive' : 'ghost');
+    b.textContent = action.label;
+    if (action.role === 'secondary') secActions.appendChild(b);
+    else priActions.appendChild(b);
+  });
+
+  // ── Annotation bar ────────────────────────────
+  document.getElementById('ann-text').textContent = def.annotation;
+}
+
+/* ── Zone renderers ────────────────────────────── */
+function renderZones(zones) {
+  return zones.map(z => renderZone(z)).join('');
+}
+
+function renderZone(z) {
+  switch(z.type) {
+    case 'vendor-card': return renderVendorCard(z);
+    case 'offer-tabs':  return renderOfferTabs(z);
+    case 'reason':      return renderReason(z);
+    case 'prev-contract': return renderPrevContract(z);
+    case 'info-content':  return renderInfoContent(z);
+    default: return '';
+  }
+}
+
+function renderVendorCard(z) {
+  const grid = z.data4
+    ? `<div class="data-grid dg-4">${z.data4.map(([l,v,cls]) => `<div><div class="data-label">${l}</div><div class="data-val${cls?' '+cls:''}">${v}</div></div>`).join('')}</div>`
+    : `<div class="data-grid dg-3">${z.data.map(([l,v,cls]) => `<div><div class="data-label">${l}</div><div class="data-val${cls?' '+cls:''}">${v}</div></div>`).join('')}</div>`;
+  return `<div class="zone">
+    <div class="zone-body">
+      <div class="vendor-row"><div class="vendor-logo">${z.logo}</div><div><div class="vendor-name">${z.vendor}</div></div></div>
+      ${grid}
+      <div class="acc-trigger"><span>${z.accordion}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="acc-content" style="white-space:pre-line">${z.accordionContent}</div>
+    </div>
+  </div>`;
+}
+
+function renderOfferTabs(z) {
+  const tabs = z.tabs.map((t,i) => `<button class="o-tab${i===0?' on':''}" onclick="switchOfferTab(this)">${t}</button>`).join('');
+  const fields = z.fields.map(f => {
+    const span = f.span === 'full' ? ' full' : '';
+    const input = f.type === 'select'
+      ? `<select class="fi">${f.options.map(o=>`<option>${o}</option>`).join('')}</select>`
+      : `<input class="fi" type="text" placeholder="${f.placeholder||''}">`;
+    return `<div class="f-field${span}"><div class="f-label">${f.label} <span class="req">*</span></div>${input}</div>`;
+  }).join('');
+
+  return `<div class="zone">
+    <div class="offer-tabs">
+      ${tabs}
+      <button class="o-tab-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+    </div>
+    <div style="padding:12px 18px 0;">
+      <div class="upload-zone">
+        <div class="uz-title">Click to upload or drag and drop</div>
+        <div class="uz-sub">Single PDF or image up to 10 MB</div>
+        <button class="ai-chip">✦ AI auto-fill</button>
+      </div>
+    </div>
+    <div class="form-grid">${fields}</div>
+  </div>`;
+}
+
+function renderReason(z) {
+  return `<div class="zone">
+    <div class="zone-body">
+      <div class="section-label">${z.label}</div>
+      <textarea class="fi" placeholder="Add any notes or reasoning for your decision…"></textarea>
+    </div>
+  </div>`;
+}
+
+function renderPrevContract(z) {
+  return `<div class="zone">
+    <div class="zone-body">
+      <div class="section-label" style="margin-bottom:12px;">Previous contract</div>
+      <div class="data-grid dg-3">${z.data.map(([l,v,cls]) => `<div><div class="data-label">${l}</div><div class="data-val${cls?' '+cls:''}">${v}</div></div>`).join('')}</div>
+    </div>
+  </div>`;
+}
+
+function renderInfoContent(z) {
+  const checks = z.checks.map(c => `
+    <div class="check-row">
+      <div class="check-circ${c.done?' done':''}">
+        ${c.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+      </div>
+      <span>${c.text}</span>
+    </div>`).join('');
+
+  return `<div class="zone">
+    <div class="info-prose"><p>${z.prose}</p></div>
+    <div class="checklist">${checks}</div>
+    <div style="padding:0 18px 16px;">
+      <a href="#" style="font-size:12px;color:var(--purple);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        ${z.link}
+      </a>
+    </div>
+  </div>`;
+}
+
+/* ── Panel section renderers ───────────────────── */
+function renderPanelSection(sec) {
+  const header = `<div class="panel-section-header"><span class="panel-section-title">${sec.label}</span></div>`;
+  const inputRow = sec.hasInput ? `<div class="panel-input-row">
+    <input class="panel-input" type="text" placeholder="Add a comment…">
+    <button class="send-btn"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </div>` : '';
+
+  const body = renderPanelContent(sec.content);
+  return `${header}<div class="panel-scroll">${body}</div>${inputRow}`;
+}
+
+function renderPanelContent(c) {
+  switch(c.type) {
+    case 'details':   return renderDetailsContent(c);
+    case 'comments':  return renderCommentsContent(c);
+    case 'ai':        return renderAIContent(c);
+    case 'documents': return renderDocsContent(c);
+    default: return '';
+  }
+}
+
+function renderDetailsContent(c) {
+  return c.groups.map(g => {
+    let rows = '';
+    if (g.rows) {
+      rows = g.rows.map(([l,v]) => `<div class="detail-row"><span class="dr-label">${l}</span><span class="dr-val">${v}</span></div>`).join('');
+    } else if (g.steps) {
+      const steps = g.steps.map((s,i) => {
+        const isLast = i === g.steps.length - 1;
+        return `<div class="wf-row">
+          <div class="wf-col"><div class="wf-dot${s.state==='done'?' done':s.state==='now'?' now':''}"></div>${isLast ? '' : '<div class="wf-line"></div>'}</div>
+          <div class="wf-label${s.state==='now'?' now':''}">${s.label}</div>
+        </div>`;
+      }).join('');
+      rows = `<div class="wf-wrap">${steps}</div>`;
+    }
+    return `<div class="detail-group"><div class="dg-title">${g.title}</div>${rows}</div>`;
+  }).join('');
+}
+
+function renderCommentsContent(c) {
+  if (!c.items.length) {
+    return `<div class="comment-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <p>No comments yet.<br>Start a conversation.</p>
+    </div>`;
+  }
+  return c.items.map(item => `<div class="comment-item">
+    <div class="c-av" style="background:${item.avBg};color:${item.avFg};">${item.av}</div>
+    <div>
+      <div class="c-meta"><span class="c-name">${item.name}</span><span class="c-time">${item.time}</span></div>
+      ${item.role ? `<div class="c-role">${item.role}</div>` : ''}
+      <div class="c-text">${item.text}</div>
+    </div>
+  </div>`).join('');
+}
+
+function renderAIContent(c) {
+  return c.insights.map(ins => `<div class="ai-insight-card">
+    <div class="ai-header">
+      <svg class="ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span class="ai-title">${ins.title}</span>
+    </div>
+    <div class="ai-body">${ins.body}</div>
+    <div class="ai-conf">✦ ${ins.conf}</div>
+  </div>`).join('');
+}
+
+function renderDocsContent(c) {
+  const statusColors = { uploaded:'var(--green)', pending:'var(--amber)' };
+  return c.files.map(f => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:12px;font-weight:500;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+      <div style="font-size:11px;color:var(--text-3);">${f.size}</div>
+    </div>
+    <span style="font-size:10px;font-weight:500;color:${statusColors[f.status]};text-transform:capitalize;">${f.status}</span>
+  </div>`).join('');
+}
+
+/* ── Panel icon SVGs ───────────────────────────── */
+function getPanelIcon(id) {
+  const icons = {
+    details: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+    comments:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    ai:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    docs:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
+  };
+  return icons[id] || icons.details;
+}
+
+/* ── Panel open/toggle logic ───────────────────── */
+function openPanelSection(sectionId, sections) {
+  const panel = document.getElementById('s-panel');
+  panel.classList.remove('closed');
+
+  sections.forEach(sec => {
+    const el = document.getElementById('ps-' + sec.id);
+    const btn = document.getElementById('pbtn-' + sec.id);
+    if (el) el.classList.toggle('visible', sec.id === sectionId);
+    if (btn) btn.classList.toggle('on', sec.id === sectionId);
+  });
+  currentPanelSection = sectionId;
+}
+
+function togglePanelSection(sectionId, sections) {
+  const panel = document.getElementById('s-panel');
+
+  if (currentPanelSection === sectionId && !panel.classList.contains('closed')) {
+    // Clicking active section → close panel
+    panel.classList.add('closed');
+    document.getElementById('pbtn-' + sectionId)?.classList.remove('on');
+    currentPanelSection = null;
+  } else {
+    openPanelSection(sectionId, sections);
+  }
+}
+
+/* ── Offer tab switch ─────────────────────────── */
+function switchOfferTab(btn) {
+  btn.closest('.offer-tabs').querySelectorAll('.o-tab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+/* ── Boot ─────────────────────────────────────── */
+loadTask('approval', document.querySelector('.sw-btn.active'));
+</script>
+</body>
+</html>

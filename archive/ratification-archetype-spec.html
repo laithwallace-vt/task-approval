@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ratification Archetype — Figma Spec</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f1f5;
+  --surface: #fff;
+  --purple: #7C5CFC;
+  --purple-light: rgba(124,92,252,0.08);
+  --purple-bd: rgba(124,92,252,0.2);
+  --green: #15803d;
+  --green-bg: rgba(21,128,61,0.08);
+  --green-bd: rgba(21,128,61,0.2);
+  --red: #dc2626;
+  --red-bg: rgba(220,38,38,0.07);
+  --red-bd: rgba(220,38,38,0.2);
+  --amber: #b45309;
+  --amber-bg: rgba(180,83,9,0.07);
+  --text-1: rgba(10,15,30,0.90);
+  --text-2: rgba(10,15,30,0.55);
+  --text-3: rgba(10,15,30,0.35);
+  --border: rgba(0,0,0,0.08);
+  --r: 6px; --r-lg: 10px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Geist', system-ui, sans-serif; background: var(--bg); color: var(--text-1); font-size: 13px; -webkit-font-smoothing: antialiased; padding: 40px 32px 80px; }
+.mono { font-family: 'Geist Mono', monospace; }
+
+/* Page layout */
+.page-head { max-width: 1200px; margin: 0 auto 32px; }
+.page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text-3); line-height: 1.5; }
+
+.section-title { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; max-width: 1200px; margin: 40px auto 14px; display: flex; align-items: center; gap: 10px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: rgba(0,0,0,0.08); }
+
+.breadcrumb { font-size: 11px; color: var(--text-3); margin-bottom: 12px; font-family: 'Geist Mono', monospace; }
+.breadcrumb span { color: var(--text-2); }
+
+/* Cards */
+.card { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); overflow: hidden; }
+.card-head { padding: 10px 14px; border-bottom: 1px solid var(--border); background: #f9fafb; display: flex; align-items: center; gap: 8px; }
+.card-title { font-size: 11px; font-weight: 600; color: var(--text-2); }
+.tag { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 4px; font-size: 9px; font-weight: 600; border: 1px solid; }
+.tag-purple { background: var(--purple-light); border-color: var(--purple-bd); color: var(--purple); }
+.tag-green { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+.tag-red { background: var(--red-bg); border-color: var(--red-bd); color: var(--red); }
+.tag-amber { background: var(--amber-bg); border-color: rgba(180,83,9,0.2); color: var(--amber); }
+.tag-grey { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.12); color: var(--text-2); }
+
+/* ── ANATOMY ── */
+.anatomy-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+.anatomy-mock { background: var(--surface); border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04); overflow: hidden; position: relative; }
+
+/* Slot callout labels */
+.callout { position: absolute; display: flex; align-items: center; gap: 5px; }
+.callout-line { height: 1px; background: rgba(124,92,252,0.4); }
+.callout-pill { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 9px; font-family: 'Geist Mono', monospace; font-size: 9px; font-weight: 600; background: var(--purple); color: white; white-space: nowrap; }
+
+/* Header chrome */
+.hdr-chrome { padding: 10px 16px; border-bottom: 1px solid var(--border); background: #fafafa; display: flex; align-items: center; gap: 8px; }
+.hdr-type { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.hdr-breadcrumb { display: flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 5px; background: #f3f4f6; border: 1px solid rgba(0,0,0,0.08); font-size: 12px; color: var(--text-2); }
+.hdr-breadcrumb-icon { font-size: 12px; }
+.hdr-spacer { flex: 1; }
+.hdr-icon { width: 28px; height: 28px; border-radius: 5px; background: #f3f4f6; border: 1px solid rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+
+/* Header meta */
+.hdr-meta { padding: 7px 16px; border-bottom: 1px solid var(--border); background: #fafafa; display: flex; align-items: center; gap: 14px; }
+.hdr-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-2); }
+.hdr-meta-avatar { width: 18px; height: 18px; border-radius: 50%; background: var(--purple-light); border: 1px solid var(--purple-bd); display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: var(--purple); }
+
+/* Body + panel */
+.body-panel { display: flex; min-height: 480px; }
+.body-main { flex: 1; padding: 20px; }
+.panel-sidebar { width: 240px; border-left: 1px solid var(--border); background: #fafafa; display: flex; flex-direction: column; }
+.panel-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.panel-tab { flex: 1; padding: 8px 0; font-size: 11px; font-weight: 500; text-align: center; color: var(--text-3); border-bottom: 2px solid transparent; cursor: pointer; }
+.panel-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+.panel-content { padding: 12px 14px; flex: 1; }
+
+/* Vendor hero card */
+.vendor-hero { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 16px; margin-bottom: 16px; }
+.vendor-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.vendor-logo { width: 32px; height: 32px; border-radius: 6px; background: #f3f4f6; border: 1px solid rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.vendor-name { font-size: 15px; font-weight: 600; color: var(--text-1); }
+.vendor-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+.vendor-metric { padding: 10px 12px; border-right: 1px solid var(--border); }
+.vendor-metric:last-child { border-right: none; }
+.metric-label { font-size: 11px; color: var(--text-3); margin-bottom: 2px; }
+.metric-value { font-size: 14px; font-weight: 600; color: var(--text-1); }
+.metric-value.savings { color: var(--green); }
+
+/* AI recommendation banner */
+.ai-banner { background: rgba(124,92,252,0.05); border: 1px solid rgba(124,92,252,0.18); border-radius: 7px; padding: 10px 12px; margin-bottom: 16px; }
+.ai-banner-header { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--purple); margin-bottom: 4px; }
+.ai-banner-text { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.ai-badge { display: inline-flex; align-items: center; gap: 4px; height: 16px; padding: 0 6px; border-radius: 3px; background: var(--purple-light); border: 1px solid var(--purple-bd); font-size: 9px; font-weight: 600; color: var(--purple); margin-top: 6px; }
+
+/* Request details accordion */
+.accordion { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text-1); background: #fafafa; }
+.accordion-chevron { font-size: 10px; color: var(--text-3); }
+
+/* Decision buttons — the KEY change (not radio buttons) */
+.decision-label { font-size: 12px; font-weight: 500; color: var(--text-1); margin-bottom: 8px; }
+.decision-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.decision-btn { padding: 10px 14px; border-radius: 7px; border: 2px solid; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.1s; }
+.decision-btn.approve { border-color: rgba(21,128,61,0.3); background: rgba(21,128,61,0.05); }
+.decision-btn.approve.selected { border-color: var(--green); background: var(--green-bg); }
+.decision-btn.deny { border-color: rgba(220,38,38,0.2); background: var(--red-bg); }
+.decision-btn.deny.selected { border-color: var(--red); }
+.decision-btn-icon { width: 22px; height: 22px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.decision-btn.approve .decision-btn-icon { border-color: var(--green); color: var(--green); }
+.decision-btn.deny .decision-btn-icon { border-color: var(--red); color: var(--red); }
+.decision-btn.approve.selected .decision-btn-icon { background: var(--green); color: white; }
+.decision-btn-label { font-size: 12px; font-weight: 500; }
+.decision-btn.approve .decision-btn-label { color: var(--green); }
+.decision-btn.deny .decision-btn-label { color: var(--red); }
+
+/* Notes field */
+.notes-label { font-size: 11px; color: var(--text-3); margin-bottom: 5px; }
+.notes-field { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--text-3); background: #fafafa; min-height: 72px; resize: none; display: flex; align-items: flex-start; }
+
+/* Panel content */
+.kv-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 11px; }
+.kv-row:last-child { border-bottom: none; }
+.kv-key { color: var(--text-3); }
+.kv-val { color: var(--text-1); font-weight: 500; text-align: right; }
+.kv-val .badge-inline { font-size: 10px; color: var(--green); font-weight: 600; }
+.line-items { border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.li-header { padding: 6px 8px; background: #f3f4f6; font-size: 10px; font-weight: 600; color: var(--text-2); display: flex; align-items: center; gap: 5px; }
+.li-row { padding: 6px 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; }
+.li-name { color: var(--text-1); }
+.li-cat { color: var(--text-3); font-size: 10px; }
+.li-amount { color: var(--text-1); font-weight: 500; }
+
+/* Footer */
+.modal-footer { padding: 12px 16px; border-top: 1px solid var(--border); background: #fafafa; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.btn-decline { padding: 0 16px; height: 34px; border-radius: 6px; border: 1px solid var(--red-bd); background: var(--red-bg); color: var(--red); font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; }
+.btn-approve { padding: 0 20px; height: 34px; border-radius: 6px; border: 1px solid rgba(124,92,252,0.4); background: var(--purple); color: white; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; }
+
+/* ── ANNOTATION SIDEBAR ── */
+.annotation-col { display: flex; flex-direction: column; gap: 14px; }
+.ann-card { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); overflow: hidden; }
+.ann-head { padding: 8px 12px; border-bottom: 1px solid var(--border); background: #f9fafb; display: flex; align-items: center; gap: 6px; }
+.ann-head-num { width: 18px; height: 18px; border-radius: 50%; background: var(--purple); color: white; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ann-head-title { font-size: 11px; font-weight: 600; color: var(--text-1); }
+.ann-body { padding: 10px 12px; }
+.ann-row { display: flex; gap: 5px; margin-bottom: 7px; font-size: 11px; line-height: 1.45; }
+.ann-row:last-child { margin-bottom: 0; }
+.ann-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--purple); flex-shrink: 0; margin-top: 4px; }
+.ann-text { color: var(--text-2); flex: 1; }
+.ann-text strong { color: var(--text-1); }
+.ann-code { font-family: 'Geist Mono', monospace; font-size: 10px; background: rgba(0,0,0,0.04); padding: 1px 4px; border-radius: 3px; color: var(--text-2); }
+.ann-issue { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 5px; padding: 7px 9px; margin-bottom: 7px; font-size: 11px; color: #92400e; line-height: 1.4; }
+.ann-issue::before { content: '⚠ '; font-weight: 700; }
+.ann-fix { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 5px; padding: 7px 9px; font-size: 11px; color: #166534; line-height: 1.4; }
+.ann-fix::before { content: '✓ '; font-weight: 700; }
+.crisp-row { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+.crisp-row:last-child { border-bottom: none; }
+.crisp-letter { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.crisp-pass { background: var(--green-bg); border: 1px solid var(--green-bd); color: var(--green); }
+.crisp-fail { background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red); }
+.crisp-text { font-size: 11px; color: var(--text-2); line-height: 1.4; flex: 1; }
+
+/* ── STATES GRID ── */
+.states-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.state-card { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); overflow: hidden; }
+.state-head { padding: 9px 12px; border-bottom: 1px solid var(--border); background: #f9fafb; }
+.state-name { font-size: 11px; font-weight: 600; color: var(--text-1); margin-bottom: 2px; }
+.state-desc { font-size: 10px; color: var(--text-3); }
+.state-body { padding: 12px; }
+.state-mock { border-radius: 7px; border: 1px solid var(--border); background: #fafafa; overflow: hidden; }
+.sm-hdr { height: 20px; background: #f0f0f3; border-bottom: 1px solid rgba(0,0,0,0.07); }
+.sm-body { padding: 9px; }
+.sm-vendor { height: 32px; border-radius: 5px; background: rgba(0,0,0,0.05); margin-bottom: 7px; }
+.sm-ai { height: 40px; border-radius: 5px; background: rgba(124,92,252,0.08); border: 1px solid rgba(124,92,252,0.15); margin-bottom: 7px; display: flex; align-items: center; padding: 0 8px; }
+.sm-ai-text { font-size: 9px; color: var(--purple); font-weight: 500; }
+.sm-decision { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 7px; }
+.sm-d-approve { height: 24px; border-radius: 5px; border: 2px solid rgba(21,128,61,0.4); background: rgba(21,128,61,0.08); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: var(--green); }
+.sm-d-approve.selected { border-color: var(--green); background: rgba(21,128,61,0.12); }
+.sm-d-deny { height: 24px; border-radius: 5px; border: 2px solid rgba(220,38,38,0.25); background: rgba(220,38,38,0.06); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: var(--red); }
+.sm-d-deny.selected { border-color: var(--red); background: rgba(220,38,38,0.1); }
+.sm-notes { height: 22px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); background: white; margin-bottom: 7px; display: flex; align-items: center; padding: 0 7px; }
+.sm-notes-text { font-size: 9px; color: var(--text-3); }
+.sm-footer { height: 24px; background: #f3f4f6; border-top: 1px solid rgba(0,0,0,0.07); display: flex; align-items: center; justify-content: flex-end; padding: 0 8px; gap: 5px; }
+.sm-btn-r { height: 13px; width: 38px; border-radius: 3px; background: rgba(124,92,252,0.7); }
+.sm-btn-r.disabled { background: rgba(124,92,252,0.25); }
+.sm-btn-d { height: 13px; width: 28px; border-radius: 3px; background: var(--red-bg); border: 1px solid var(--red-bd); }
+.sm-toast { margin: 8px 0; border-radius: 5px; background: rgba(21,128,61,0.1); border: 1px solid rgba(21,128,61,0.25); padding: 5px 8px; font-size: 9px; color: var(--green); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+
+/* ── EMAIL SPEC ── */
+.email-spec-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+.email-mock { background: var(--surface); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.06); }
+.email-chrome { padding: 10px 14px; border-bottom: 1px solid var(--border); background: #f9fafb; }
+.email-chrome-from { font-size: 11px; color: var(--text-3); margin-bottom: 2px; }
+.email-chrome-subject { font-size: 12px; font-weight: 600; color: var(--text-1); }
+.email-body { padding: 16px; }
+.email-logo-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.email-logo { font-size: 18px; font-weight: 700; color: var(--purple); }
+.email-h1 { font-size: 15px; font-weight: 600; color: var(--text-1); margin-bottom: 6px; line-height: 1.3; }
+.email-sub { font-size: 12px; color: var(--text-2); margin-bottom: 14px; line-height: 1.5; }
+.email-vendor-card { border: 1px solid var(--border); border-radius: 7px; padding: 12px; margin-bottom: 14px; }
+.email-vendor-name { font-size: 13px; font-weight: 600; color: var(--text-1); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.email-metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; margin-bottom: 8px; }
+.email-metric { padding: 7px 9px; border-right: 1px solid var(--border); }
+.email-metric:last-child { border-right: none; }
+.email-metric-l { font-size: 9px; color: var(--text-3); margin-bottom: 1px; }
+.email-metric-v { font-size: 12px; font-weight: 600; color: var(--text-1); }
+.email-metric-v.green { color: var(--green); }
+.email-ai-row { background: rgba(124,92,252,0.06); border: 1px solid rgba(124,92,252,0.15); border-radius: 5px; padding: 7px 9px; display: flex; align-items: flex-start; gap: 6px; margin-bottom: 14px; }
+.email-ai-icon { font-size: 12px; }
+.email-ai-text { font-size: 11px; color: var(--text-2); line-height: 1.4; }
+.email-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.email-btn-approve { height: 36px; border-radius: 6px; background: var(--purple); color: white; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.email-btn-decline { height: 36px; border-radius: 6px; background: var(--red-bg); border: 1px solid var(--red-bd); color: var(--red); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.email-link-row { font-size: 11px; color: var(--text-3); text-align: center; }
+.email-link-row a { color: var(--purple); text-decoration: underline; }
+.email-footer-strip { padding: 8px 14px; background: #f9fafb; border-top: 1px solid var(--border); font-size: 10px; color: var(--text-3); }
+
+/* ── SLACK SPEC ── */
+.slack-spec-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+.slack-mock { background: #fff; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.06); }
+.slack-chrome { padding: 8px 12px; background: #4a154b; display: flex; align-items: center; gap: 8px; }
+.slack-chrome-name { font-size: 12px; font-weight: 600; color: white; }
+.slack-chrome-hash { color: rgba(255,255,255,0.5); }
+.slack-msg { padding: 12px 14px; }
+.slack-sender-row { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.slack-avatar { width: 28px; height: 28px; border-radius: 6px; background: var(--purple-light); border: 1px solid var(--purple-bd); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.slack-sender-info { flex: 1; }
+.slack-sender-name { font-size: 12px; font-weight: 700; color: #1d1c1d; }
+.slack-time { font-size: 10px; color: #616061; }
+.slack-text { font-size: 12px; color: #1d1c1d; line-height: 1.5; margin-bottom: 10px; }
+.slack-card { border: 1px solid #e8e8e8; border-left: 4px solid var(--purple); border-radius: 6px; overflow: hidden; }
+.slack-card-body { padding: 10px 12px; }
+.slack-card-title { font-size: 13px; font-weight: 700; color: var(--purple); margin-bottom: 6px; }
+.slack-card-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.slack-field-k { font-size: 10px; font-weight: 700; color: #616061; }
+.slack-field-v { font-size: 11px; color: #1d1c1d; }
+.slack-field-v.green { color: var(--green); font-weight: 600; }
+.slack-ai-strip { background: rgba(124,92,252,0.06); border: 1px solid rgba(124,92,252,0.15); border-radius: 4px; padding: 6px 8px; margin-bottom: 8px; font-size: 11px; color: var(--purple); }
+.slack-actions { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid #e8e8e8; background: #f8f8f8; }
+.slack-btn { height: 28px; padding: 0 12px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.slack-btn-approve { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+.slack-btn-decline { background: var(--red-bg); border-color: var(--red-bd); color: var(--red); }
+.slack-btn-view { background: white; border-color: rgba(0,0,0,0.15); color: #616061; }
+
+/* ── FIGMA NOTES ── */
+.figma-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.figma-card { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); overflow: hidden; }
+.figma-head { padding: 8px 12px; border-bottom: 1px solid var(--border); background: #f9fafb; }
+.figma-title { font-size: 11px; font-weight: 600; color: var(--text-1); }
+.figma-body { padding: 10px 12px; }
+.figma-row { display: flex; gap: 5px; padding: 4px 0; font-size: 11px; border-bottom: 1px solid rgba(0,0,0,0.04); }
+.figma-row:last-child { border-bottom: none; }
+.figma-key { color: var(--text-3); width: 100px; flex-shrink: 0; font-size: 10px; font-family: 'Geist Mono', monospace; }
+.figma-val { color: var(--text-1); flex: 1; }
+.figma-note { font-size: 10px; color: var(--text-3); margin-top: 2px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="breadcrumb">DES-655 · DES-627 / <span>Ratification Archetype</span> / Figma Spec</div>
+  <div class="page-title">Ratification — Figma-Ready Spec</div>
+  <div class="page-sub">The 98% approval case. Speed is the only metric. One truth to confirm, one action to take. Covers: desktop anatomy, interaction states, email, Slack, mobile.</div>
+</div>
+
+<!-- ── SECTION 1: Desktop Anatomy ── -->
+<div class="section-title">01 · Desktop anatomy — Ratification (default state, approved selected)</div>
+<div class="anatomy-grid">
+
+  <!-- THE MOCK -->
+  <div class="anatomy-mock">
+    <!-- Header chrome -->
+    <div class="hdr-chrome">
+      <div class="hdr-type">Manager Approval</div>
+      <div class="hdr-breadcrumb">
+        <div class="hdr-breadcrumb-icon">🟢</div>
+        Google New Purchase ↗
+      </div>
+      <div class="hdr-spacer"></div>
+      <div class="hdr-icon">💬</div>
+      <div class="hdr-icon">≡</div>
+      <div class="hdr-icon">×</div>
+    </div>
+
+    <!-- Header meta -->
+    <div class="hdr-meta">
+      <div class="hdr-meta-item">
+        <div class="hdr-meta-avatar">A</div>
+        Alex Chen (You) ✏
+      </div>
+      <div class="hdr-meta-item">📅 Due Mar 29, 2026</div>
+    </div>
+
+    <!-- Body + panel -->
+    <div class="body-panel">
+      <div class="body-main">
+
+        <!-- Vendor hero card -->
+        <div class="vendor-hero">
+          <div class="vendor-header">
+            <div class="vendor-logo">🟢</div>
+            <div class="vendor-name">Google</div>
+          </div>
+          <div class="vendor-metrics">
+            <div class="vendor-metric">
+              <div class="metric-label">Total Amount</div>
+              <div class="metric-value">$92,000</div>
+            </div>
+            <div class="vendor-metric">
+              <div class="metric-label">Rolling</div>
+              <div class="metric-value">Quarterly</div>
+            </div>
+            <div class="vendor-metric">
+              <div class="metric-label">Contract Date</div>
+              <div class="metric-value">24 Mar 2026</div>
+            </div>
+          </div>
+          <div class="accordion">
+            <div class="accordion-header">Request Details <span class="accordion-chevron">▼</span></div>
+          </div>
+        </div>
+
+        <!-- AI recommendation -->
+        <div class="ai-banner">
+          <div class="ai-banner-header">✦ Recommend Approval</div>
+          <div class="ai-banner-text">Request is within budget with clear business justification. Standard approval path recommended.</div>
+          <div class="ai-badge">Powered by Vertice AI</div>
+        </div>
+
+        <!-- Decision — buttons, not radio -->
+        <div class="decision-label">Your decision</div>
+        <div class="decision-btns">
+          <div class="decision-btn approve selected">
+            <div class="decision-btn-icon">✓</div>
+            <div class="decision-btn-label">Approve</div>
+          </div>
+          <div class="decision-btn deny">
+            <div class="decision-btn-icon">×</div>
+            <div class="decision-btn-label">Decline</div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="notes-label">Reason for your decision <span style="color:var(--text-3);">(optional)</span></div>
+        <div class="notes-field">Add any notes or reasoning for your decision…</div>
+
+      </div>
+
+      <!-- Right panel -->
+      <div class="panel-sidebar">
+        <div class="panel-tabs">
+          <div class="panel-tab active">Comments</div>
+          <div class="panel-tab">Details</div>
+        </div>
+        <div class="panel-content">
+          <!-- AI rec in panel when in Details tab here, but in Comments tab show details -->
+          <div class="kv-row"><div class="kv-key">Assignee</div><div class="kv-val">Alex Chen (You)</div></div>
+          <div class="kv-row"><div class="kv-key">Cost Centre</div><div class="kv-val">CC-DEMO-001</div></div>
+          <div class="kv-row"><div class="kv-key">Budget</div><div class="kv-val">$92,000 <span class="badge-inline">✓ Within</span></div></div>
+          <div class="kv-row"><div class="kv-key">Office</div><div class="kv-val">London</div></div>
+          <div class="kv-row"><div class="kv-key">Supplier</div><div class="kv-val">Apple</div></div>
+          <div style="margin-top:12px;">
+            <div class="line-items">
+              <div class="li-header">☰ Line items (2)</div>
+              <div class="li-row"><div><div class="li-name">Enterprise CRM</div><div class="li-cat">Software</div></div><div class="li-amount">$75,000</div></div>
+              <div class="li-row"><div><div class="li-name">Implementation</div><div class="li-cat">Services</div></div><div class="li-amount">$17,000</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <div class="btn-decline">Decline</div>
+      <div class="btn-approve">Approve</div>
+    </div>
+  </div>
+
+  <!-- Annotation column -->
+  <div class="annotation-col">
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">1</div><div class="ann-head-title">Slot 1 — Header (2 sub-slots)</div></div>
+      <div class="ann-body">
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>1a Chrome:</strong> Task type label (left) + entity breadcrumb with icon + close. Panel toggle (💬) visible as icon — no label.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>1b Meta:</strong> Assignee with avatar + pencil edit affordance. Due date. Omit if task type doesn't configure these.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">Frame name: <span class="ann-code">task/ratification/header</span></div></div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">2</div><div class="ann-head-title">Slot 2 — Body: single_view layout</div></div>
+      <div class="ann-body">
+        <div class="ann-issue">Previous design: radio buttons for Approve/Deny — confuses mobile users, looks like a form, not a decision.</div>
+        <div class="ann-fix">Replacement: two full-width decision cards with icon + label. Selected state uses coloured border + fill. Matches Linear/Asana "status select" pattern.</div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Vendor hero card:</strong> Always full-width. No competitor comparison needed here (that's War Room).</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>AI banner:</strong> Shows when Vertice AI has a recommendation. Can be positive (recommend) or cautionary (flag risk). Hidden if no signal.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Notes:</strong> Optional, never required for Ratification. Placeholder copy: "Add any notes…"</div></div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">3</div><div class="ann-head-title">Slot 3 — Panel: collapsed default</div></div>
+      <div class="ann-body">
+        <div class="ann-issue">Previous: details squeezed in a narrow sidebar — not enough room, creates visual noise.</div>
+        <div class="ann-fix">Panel collapsed by default for Ratification (most approvals need no context). Toggle via 💬 icon in header. When expanded: 240px wide, tabs for Comments / Details.</div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><span class="ann-code">panelSections: ["details", "comments"]</span> — Details tab first (most useful for quick context).</div></div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">4</div><div class="ann-head-title">Slot 4 — Actions: task mode</div></div>
+      <div class="ann-body">
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Approve button:</strong> Enabled only when a decision is selected. Disabled + greyed if neither option selected.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Decline button:</strong> Left-anchored. Destructive styling. Opens confirmation if notes field is empty.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">No "Cancel" or "Back" — Ratification is a single-step task. Close × serves as escape.</div></div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">5</div><div class="ann-head-title">CRISP check</div></div>
+      <div class="ann-body">
+        <div class="crisp-row"><div class="crisp-letter crisp-pass">C</div><div class="crisp-text">Task type label + entity breadcrumb gives instant orientation. User knows what they're approving.</div></div>
+        <div class="crisp-row"><div class="crisp-letter crisp-pass">R</div><div class="crisp-text">AI recommendation visible immediately. Budget check inline. No navigation required.</div></div>
+        <div class="crisp-row"><div class="crisp-letter crisp-pass">I</div><div class="crisp-text">AI explains its recommendation. Budget validation shown. Line items available on demand.</div></div>
+        <div class="crisp-row"><div class="crisp-letter crisp-pass">S</div><div class="crisp-text">Decision buttons replace radio + form pattern. One click to select, one to confirm. No page navigation.</div></div>
+        <div class="crisp-row"><div class="crisp-letter crisp-pass">P</div><div class="crisp-text">Panel available for deep-dive. Request details accordion for full context. Notes optional, never blocking.</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SECTION 2: Interaction States ── -->
+<div class="section-title">02 · Interaction states — 4 required</div>
+<div class="states-grid">
+
+  <!-- Default (no selection) -->
+  <div class="state-card">
+    <div class="state-head">
+      <div class="state-name">Default — No selection</div>
+      <div class="state-desc">Task opened, user hasn't decided yet</div>
+    </div>
+    <div class="state-body">
+      <div class="state-mock">
+        <div class="sm-hdr"></div>
+        <div class="sm-body">
+          <div class="sm-vendor"></div>
+          <div class="sm-ai"><div class="sm-ai-text">✦ Recommend Approval</div></div>
+          <div class="sm-decision">
+            <div class="sm-d-approve">✓ Approve</div>
+            <div class="sm-d-deny">✗ Decline</div>
+          </div>
+          <div class="sm-notes"><div class="sm-notes-text">Add notes… (optional)</div></div>
+        </div>
+        <div class="sm-footer">
+          <div class="sm-btn-d"></div>
+          <div class="sm-btn-r disabled"></div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-3);">Approve button: disabled. Both decision cards: unselected state. Notes: empty placeholder.</div>
+    </div>
+  </div>
+
+  <!-- Approve selected -->
+  <div class="state-card">
+    <div class="state-head">
+      <div class="state-name">Approve selected</div>
+      <div class="state-desc">User has clicked the Approve card</div>
+    </div>
+    <div class="state-body">
+      <div class="state-mock">
+        <div class="sm-hdr"></div>
+        <div class="sm-body">
+          <div class="sm-vendor"></div>
+          <div class="sm-ai"><div class="sm-ai-text">✦ Recommend Approval</div></div>
+          <div class="sm-decision">
+            <div class="sm-d-approve selected">✓ Approve</div>
+            <div class="sm-d-deny">✗ Decline</div>
+          </div>
+          <div class="sm-notes"><div class="sm-notes-text">Add notes… (optional)</div></div>
+        </div>
+        <div class="sm-footer">
+          <div class="sm-btn-d"></div>
+          <div class="sm-btn-r"></div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-3);">Approve card: selected (green border + fill). Approve button: enabled, full colour. Decline button: enabled.</div>
+    </div>
+  </div>
+
+  <!-- Decline selected + confirmation -->
+  <div class="state-card">
+    <div class="state-head">
+      <div class="state-name">Decline + confirm</div>
+      <div class="state-desc">User selected Decline, notes empty → confirm prompt</div>
+    </div>
+    <div class="state-body">
+      <div class="state-mock">
+        <div class="sm-hdr"></div>
+        <div class="sm-body">
+          <div class="sm-vendor"></div>
+          <div class="sm-decision">
+            <div class="sm-d-approve">✓ Approve</div>
+            <div class="sm-d-deny selected">✗ Decline</div>
+          </div>
+          <div style="background:rgba(220,38,38,0.05);border:1px solid rgba(220,38,38,0.2);border-radius:5px;padding:6px 8px;margin-bottom:5px;">
+            <div style="font-size:9px;font-weight:600;color:var(--red);margin-bottom:2px;">Add a reason? (optional)</div>
+            <div style="height:22px;background:white;border-radius:3px;border:1px solid rgba(0,0,0,0.1);"></div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <div style="flex:1;height:18px;border-radius:3px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-2);">Skip</div>
+            <div style="flex:1;height:18px;border-radius:3px;background:var(--red-bg);border:1px solid var(--red-bd);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--red);font-weight:600;">Decline</div>
+          </div>
+        </div>
+        <div class="sm-footer"></div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-3);">Optional notes prompt inline — not a modal. "Skip" proceeds without notes. Soft friction, not a gate.</div>
+    </div>
+  </div>
+
+  <!-- Success state -->
+  <div class="state-card">
+    <div class="state-head">
+      <div class="state-name">Submitted — success</div>
+      <div class="state-desc">Decision recorded, task complete</div>
+    </div>
+    <div class="state-body">
+      <div class="state-mock">
+        <div class="sm-hdr"></div>
+        <div class="sm-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100px;gap:6px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--green-bg);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--green);">✓</div>
+          <div style="font-size:10px;font-weight:600;color:var(--green);">Approved</div>
+          <div style="font-size:9px;color:var(--text-3);text-align:center;">Google New Purchase has been approved. Renata Benesova has been notified.</div>
+        </div>
+        <div class="sm-footer">
+          <div style="font-size:9px;color:var(--purple);cursor:pointer;">Close</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text-3);">Modal stays open briefly showing confirmation. Auto-closes after 3s or user clicks Close. Toast fires in background. Specific outcome confirmed — not generic "Success".</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── SECTION 3: Email ── -->
+<div class="section-title">03 · Email notification — new design (DES-627)</div>
+<div class="email-spec-grid">
+
+  <div class="email-mock">
+    <div class="email-chrome">
+      <div class="email-chrome-from">From: Vertice &lt;notifications@vertice.one&gt;</div>
+      <div class="email-chrome-subject">Action required: Approve Google renewal — $92,000</div>
+    </div>
+    <div class="email-body">
+      <div class="email-logo-row">
+        <div class="email-logo">vertice</div>
+        <div style="font-size:11px;color:var(--text-3);">Spend management</div>
+      </div>
+      <div class="email-h1">You have a pending approval</div>
+      <div class="email-sub">Alex Chen needs your approval for a Google SaaS renewal. Your decision is due by 29 March 2026.</div>
+      <div class="email-vendor-card">
+        <div class="email-vendor-name">🟢 Google Workspace</div>
+        <div class="email-metrics-row">
+          <div class="email-metric"><div class="email-metric-l">Total</div><div class="email-metric-v">$92,000</div></div>
+          <div class="email-metric"><div class="email-metric-l">Savings</div><div class="email-metric-v green">$8,200 · 8%</div></div>
+          <div class="email-metric"><div class="email-metric-l">Contract</div><div class="email-metric-v">Quarterly</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-2);">Requested by Alex Chen · Cost Centre CC-DEMO-001 · Within budget</div>
+      </div>
+      <div class="email-ai-row">
+        <div class="email-ai-icon">✦</div>
+        <div class="email-ai-text"><strong style="color:var(--purple);">Vertice AI recommends approval.</strong> Request is within budget with clear business justification. Standard renewal terms.</div>
+      </div>
+      <div class="email-btns">
+        <div class="email-btn-approve">✓ Approve</div>
+        <div class="email-btn-decline">✗ Decline</div>
+      </div>
+      <div class="email-link-row">Or <a href="#">view full request in Vertice</a> for more detail.</div>
+    </div>
+    <div class="email-footer-strip">This email was sent by Vertice on behalf of your organisation. <a href="#" style="color:var(--purple);">Manage notification preferences</a></div>
+  </div>
+
+  <div class="annotation-col">
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">!</div><div class="ann-head-title">Current issues (DES-627)</div></div>
+      <div class="ann-body">
+        <div class="ann-issue">No action buttons — user must navigate to platform to approve anything.</div>
+        <div class="ann-issue">Not enough detail in the email to approve confidently without opening the task.</div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">✓</div><div class="ann-head-title">New email spec</div></div>
+      <div class="ann-body">
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Subject line pattern:</strong> "Action required: [task type] [vendor] — [amount]". Scannable in inbox.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Vendor card:</strong> Logo, total, savings delta, billing cadence, requester, cost centre, budget status.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>AI recommendation:</strong> 1 sentence. Positive or cautionary. Always present if AI signal available.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Action buttons:</strong> Magic link tokens. Decision recorded without login for low-risk Ratification. High-risk tasks require login confirmation.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Fallback link:</strong> "View full request in Vertice" for users who want more context before deciding.</div></div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">⚙</div><div class="ann-head-title">Engineering notes</div></div>
+      <div class="ann-body">
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">Approve/Decline buttons are signed, time-limited URLs (<span class="ann-code">?token=xxx&action=approve</span>).</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">On click: server validates token, records decision, redirects to confirmation page. No login required for standard approvals.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">For high-value tasks (>£100k threshold, configurable): token redirects to platform login then confirms decision. Not inline.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">Email rendered as HTML. Tested in Gmail, Outlook (desktop + web), Apple Mail.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 4: Slack ── -->
+<div class="section-title">04 · Slack / Teams notification — new design (DES-627)</div>
+<div class="slack-spec-grid">
+
+  <div class="slack-mock">
+    <div class="slack-chrome">
+      <div class="slack-chrome-hash">#</div>
+      <div class="slack-chrome-name">approvals</div>
+    </div>
+    <div class="slack-msg">
+      <div class="slack-sender-row">
+        <div class="slack-avatar">V</div>
+        <div class="slack-sender-info">
+          <div class="slack-sender-name">Vertice <span style="color:#616061;font-size:10px;font-weight:400;">App</span></div>
+          <div class="slack-time">Today at 9:28 AM</div>
+        </div>
+      </div>
+      <div class="slack-text">👋 <strong>Alex Chen</strong>, you have a pending approval that's due by <strong>29 March</strong>.</div>
+      <div class="slack-card">
+        <div class="slack-card-body">
+          <div class="slack-card-title">Manager Approval · Google New Purchase</div>
+          <div class="slack-card-fields">
+            <div>
+              <div class="slack-field-k">AMOUNT</div>
+              <div class="slack-field-v">$92,000</div>
+            </div>
+            <div>
+              <div class="slack-field-k">SAVINGS</div>
+              <div class="slack-field-v green">$8,200 · 8%</div>
+            </div>
+            <div>
+              <div class="slack-field-k">REQUESTED BY</div>
+              <div class="slack-field-v">Renata Benesova</div>
+            </div>
+            <div>
+              <div class="slack-field-k">DUE</div>
+              <div class="slack-field-v">Mar 29, 2026</div>
+            </div>
+          </div>
+          <div class="slack-ai-strip">✦ Vertice AI recommends approval — within budget, standard terms.</div>
+        </div>
+        <div class="slack-actions">
+          <div class="slack-btn slack-btn-approve">✓ Approve</div>
+          <div class="slack-btn slack-btn-decline">✗ Decline</div>
+          <div class="slack-btn slack-btn-view">View details ↗</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation-col">
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">!</div><div class="ann-head-title">Current issues (DES-627)</div></div>
+      <div class="ann-body">
+        <div class="ann-issue">Custom tasks have no approval buttons in Slack — only "View in platform".</div>
+        <div class="ann-issue">Insufficient context. User can't make a decision from the notification alone.</div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">✓</div><div class="ann-head-title">New Slack Block Kit spec</div></div>
+      <div class="ann-body">
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Message text:</strong> Personalised ("👋 Alex Chen") with task type + due date. Friendly, not robotic.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Attachment card:</strong> Left border = Vertice purple. Task name + type as title.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Fields:</strong> Amount, savings (colour-coded), requester, due date. 4 fields maximum — no noise.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>AI strip:</strong> 1 sentence recommendation inline. Shown only when signal available.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text"><strong>Buttons:</strong> Approve + Decline interactive (Block Kit actions). "View details" as tertiary. After action: message updates to show decision made + timestamp.</div></div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <div class="ann-head"><div class="ann-head-num">⚙</div><div class="ann-head-title">Post-action message update</div></div>
+      <div class="ann-body">
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">On Approve: message updates — buttons replaced with "✓ Approved by Alex Chen · 9:31 AM". No re-message needed.</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">On Decline: message updates — "✗ Declined by Alex Chen · reason: [notes if added]".</div></div>
+        <div class="ann-row"><div class="ann-dot"></div><div class="ann-text">Teams equivalent: Adaptive Card with same fields + actions.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 5: Figma Frame Notes ── -->
+<div class="section-title">05 · Figma file structure — frame names + component notes</div>
+<div class="figma-grid">
+
+  <div class="figma-card">
+    <div class="figma-head"><div class="figma-title">Frame naming convention</div></div>
+    <div class="figma-body">
+      <div class="figma-row"><div class="figma-key">Desktop L</div><div class="figma-val">task/ratification/desktop-lg/default</div></div>
+      <div class="figma-row"><div class="figma-key"></div><div class="figma-val">task/ratification/desktop-lg/approved</div></div>
+      <div class="figma-row"><div class="figma-key"></div><div class="figma-val">task/ratification/desktop-lg/declined</div></div>
+      <div class="figma-row"><div class="figma-key"></div><div class="figma-val">task/ratification/desktop-lg/submitted</div></div>
+      <div class="figma-row"><div class="figma-key">Desktop S</div><div class="figma-val">task/ratification/desktop-sm/default</div></div>
+      <div class="figma-row"><div class="figma-key">Mobile</div><div class="figma-val">task/ratification/mobile/default</div></div>
+      <div class="figma-row"><div class="figma-key">Email</div><div class="figma-val">notification/email/ratification/v1</div></div>
+      <div class="figma-row"><div class="figma-key">Slack</div><div class="figma-val">notification/slack/ratification/v1</div></div>
+    </div>
+  </div>
+
+  <div class="figma-card">
+    <div class="figma-head"><div class="figma-title">Token references</div></div>
+    <div class="figma-body">
+      <div class="figma-row"><div class="figma-key">Primary</div><div class="figma-val">#7C5CFC (Vertice purple)</div></div>
+      <div class="figma-row"><div class="figma-key">Approve</div><div class="figma-val">#15803d / green-700</div></div>
+      <div class="figma-row"><div class="figma-key">Decline</div><div class="figma-val">#dc2626 / red-600</div></div>
+      <div class="figma-row"><div class="figma-key">Surface</div><div class="figma-val">#ffffff</div></div>
+      <div class="figma-row"><div class="figma-key">Surface 2</div><div class="figma-val">#fafafa</div></div>
+      <div class="figma-row"><div class="figma-key">Border</div><div class="figma-val">rgba(0,0,0,0.08)</div></div>
+      <div class="figma-row"><div class="figma-key">Text 1</div><div class="figma-val">rgba(10,15,30,0.90)</div></div>
+      <div class="figma-row"><div class="figma-key">Text 2</div><div class="figma-val">rgba(10,15,30,0.55)</div></div>
+      <div class="figma-row"><div class="figma-key">Text 3</div><div class="figma-val">rgba(10,15,30,0.35)</div></div>
+      <div class="figma-row"><div class="figma-key">Radius lg</div><div class="figma-val">10px (modal, cards)</div></div>
+      <div class="figma-row"><div class="figma-key">Radius</div><div class="figma-val">6px (inputs, buttons)</div></div>
+    </div>
+  </div>
+
+  <div class="figma-card">
+    <div class="figma-head"><div class="figma-title">New components needed</div></div>
+    <div class="figma-body">
+      <div class="figma-row">
+        <div class="figma-key">DecisionCard</div>
+        <div><div class="figma-val">Replaces RadioGroup for Approve/Deny</div><div class="figma-note">Variants: approve | deny × unselected | selected</div></div>
+      </div>
+      <div class="figma-row">
+        <div class="figma-key">AIBanner</div>
+        <div><div class="figma-val">Vertice AI recommendation inline</div><div class="figma-note">Variants: recommend | caution | hidden</div></div>
+      </div>
+      <div class="figma-row">
+        <div class="figma-key">VendorHero</div>
+        <div><div class="figma-val">Full-width vendor card with metrics</div><div class="figma-note">Replaces squeezed panel layout</div></div>
+      </div>
+      <div class="figma-row">
+        <div class="figma-key">EmailTemplate</div>
+        <div><div class="figma-val">Ratification email frame</div><div class="figma-note">Matches HTML email spec</div></div>
+      </div>
+      <div class="figma-row">
+        <div class="figma-key">SlackCard</div>
+        <div><div class="figma-val">Block Kit card preview</div><div class="figma-note">For handoff to Slack integration team</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskMeta Placement — Engineering Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS ─────────────────────────────────────────────── */
+:root {
+  --bg:        #0f1117;
+  --bg-2:      #161a24;
+  --bg-3:      #1d2230;
+  --bg-4:      #242838;
+  --border:    rgba(255,255,255,0.07);
+  --border-2:  rgba(255,255,255,0.12);
+
+  --text-1:    rgba(255,255,255,0.92);
+  --text-2:    rgba(255,255,255,0.60);
+  --text-3:    rgba(255,255,255,0.35);
+  --text-4:    rgba(255,255,255,0.20);
+
+  --purple:    #7c5cfc;
+  --purple-dim: rgba(124,92,252,0.15);
+  --purple-border: rgba(124,92,252,0.30);
+
+  --green:     #22c55e;
+  --green-dim: rgba(34,197,94,0.10);
+  --green-border: rgba(34,197,94,0.25);
+  --green-text: #4ade80;
+
+  --blue:      #3b82f6;
+  --blue-dim:  rgba(59,130,246,0.10);
+  --blue-border: rgba(59,130,246,0.25);
+  --blue-text: #60a5fa;
+
+  --amber:     #f59e0b;
+  --amber-dim: rgba(245,158,11,0.10);
+  --amber-border: rgba(245,158,11,0.25);
+  --amber-text: #fbbf24;
+
+  --red:       #ef4444;
+  --red-dim:   rgba(239,68,68,0.10);
+  --red-border: rgba(239,68,68,0.25);
+  --red-text:  #f87171;
+
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  --r:   6px;
+  --r-lg: 10px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text-1);
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── TOP NAV ────────────────────────────────────────────── */
+.topnav {
+  height: 52px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.topnav-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--purple);
+  background: var(--purple-dim);
+  border: 1px solid var(--purple-border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  letter-spacing: 0.04em;
+}
+
+.topnav-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  letter-spacing: -0.01em;
+}
+
+.topnav-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+.topnav-version {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* ─── TABS ───────────────────────────────────────────────── */
+.tab-row {
+  height: 44px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  padding: 0 24px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.tab {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  user-select: none;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text-2); }
+.tab.active { color: var(--text-1); border-bottom-color: var(--purple); }
+
+.tab-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: var(--bg-4);
+  color: var(--text-3);
+}
+.tab.active .tab-num {
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+
+/* ─── MAIN CONTENT ───────────────────────────────────────── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 24px;
+}
+
+.panel {
+  display: none;
+  max-width: 900px;
+  margin: 0 auto;
+  animation: fadeIn 0.2s ease;
+}
+.panel.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── SECTION LABELS ─────────────────────────────────────── */
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.section-gap { margin-bottom: 32px; }
+
+/* ─── CARDS ──────────────────────────────────────────────── */
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.card-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-left: auto;
+  font-family: var(--font-mono);
+}
+
+.card-body { padding: 18px; }
+
+/* ─── CODE BLOCK ─────────────────────────────────────────── */
+.code-block {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-2);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.code-block .kw  { color: var(--purple); }
+.code-block .fn  { color: var(--blue-text); }
+.code-block .str { color: var(--green-text); }
+.code-block .num { color: var(--amber-text); }
+.code-block .cmt { color: var(--text-3); font-style: italic; }
+.code-block .key { color: var(--text-1); }
+.code-block .op  { color: var(--red-text); }
+
+/* ─── DEFINITION TABLE ───────────────────────────────────── */
+.def-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.def-table th {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-3);
+}
+.def-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  vertical-align: top;
+}
+.def-table tr:last-child td { border-bottom: none; }
+.def-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* ─── PILLS ──────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.pill-yes    { background: var(--green-dim);   color: var(--green-text);  border: 1px solid var(--green-border); }
+.pill-no     { background: var(--red-dim);     color: var(--red-text);    border: 1px solid var(--red-border); }
+.pill-maybe  { background: var(--amber-dim);   color: var(--amber-text);  border: 1px solid var(--amber-border); }
+.pill-note   { background: var(--bg-4);        color: var(--text-2);      border: 1px solid var(--border-2); }
+.pill-header { background: var(--blue-dim);    color: var(--blue-text);   border: 1px solid var(--blue-border); }
+.pill-body   { background: var(--green-dim);   color: var(--green-text);  border: 1px solid var(--green-border); }
+
+/* ─── DECISION FLOW ──────────────────────────────────────── */
+.flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.flow-step {
+  display: flex;
+  gap: 0;
+}
+
+.flow-line-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.flow-node {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-2);
+  background: var(--bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  z-index: 1;
+  margin-top: 14px;
+}
+
+.flow-node.active {
+  border-color: var(--purple);
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+
+.flow-connector {
+  width: 1px;
+  flex: 1;
+  min-height: 16px;
+  background: var(--border);
+  margin: 2px 0;
+}
+
+.flow-content {
+  flex: 1;
+  padding: 10px 0 10px 14px;
+}
+
+.flow-question {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  margin-bottom: 6px;
+}
+
+.flow-branches {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.flow-branch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.flow-branch:hover { border-color: var(--border-2); background: var(--bg-4); }
+.flow-branch.selected-header { border-color: var(--blue-border); background: var(--blue-dim); color: var(--blue-text); }
+.flow-branch.selected-body   { border-color: var(--green-border); background: var(--green-dim); color: var(--green-text); }
+.flow-branch.selected-urgent { border-color: var(--amber-border); background: var(--amber-dim); color: var(--amber-text); }
+
+.flow-branch-label { color: var(--text-3); font-size: 11px; font-family: var(--font-mono); }
+.flow-branch-val   { color: var(--text-1); font-weight: 500; }
+
+/* ─── INTERACTIVE ZONE COUNTER ───────────────────────────── */
+.zone-builder {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.zone-builder-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zone-builder-body {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  min-height: 360px;
+}
+
+.zone-canvas {
+  padding: 18px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zone-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  cursor: grab;
+  transition: all 0.15s;
+  user-select: none;
+}
+.zone-item:hover { border-color: var(--border-2); background: var(--bg-4); }
+.zone-item.counts {
+  border-color: var(--green-border);
+  background: var(--green-dim);
+}
+.zone-item.not-counts {
+  border-color: var(--border);
+  background: var(--bg-2);
+  opacity: 0.5;
+}
+
+.zone-item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--bg-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.zone-item-info { flex: 1; }
+.zone-item-name { font-size: 12px; font-weight: 500; color: var(--text-1); }
+.zone-item-type { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+
+.zone-item-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.zone-toggle {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--border-2);
+  background: var(--bg-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.zone-toggle:hover { border-color: var(--purple-border); background: var(--purple-dim); }
+.zone-item.counts .zone-toggle {
+  border-color: var(--red-border);
+  background: var(--red-dim);
+  color: var(--red-text);
+}
+.zone-item.not-counts .zone-toggle {
+  border-color: var(--green-border);
+  background: var(--green-dim);
+  color: var(--green-text);
+}
+
+.zone-sidebar {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.zone-counter {
+  text-align: center;
+  padding: 20px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.zone-count-num {
+  font-family: var(--font-mono);
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 4px;
+  transition: color 0.2s, transform 0.15s;
+}
+
+.zone-count-label {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.placement-result {
+  padding: 14px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.placement-result-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+.placement-result-value {
+  font-size: 15px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  transition: color 0.2s;
+}
+
+.placement-result-reason {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.threshold-bar {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px;
+}
+
+.threshold-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+
+.threshold-track {
+  height: 6px;
+  background: var(--bg-4);
+  border-radius: 3px;
+  position: relative;
+  overflow: visible;
+  margin-bottom: 8px;
+}
+
+.threshold-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.3s ease, background 0.2s;
+  max-width: 100%;
+}
+
+.threshold-marker {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: var(--purple);
+  border-radius: 1px;
+  left: 60%; /* 3/5 * 100 */
+}
+
+.threshold-marker-label {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--purple);
+  white-space: nowrap;
+}
+
+.threshold-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+/* ─── URGENCY CALLOUT ────────────────────────────────────── */
+.urgency-box {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--amber-dim);
+  border: 1px solid var(--amber-border);
+  border-radius: var(--r);
+}
+
+.urgency-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.urgency-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--amber-text);
+  margin-bottom: 4px;
+}
+
+.urgency-body {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+/* ─── EDGE CASE CARDS ────────────────────────────────────── */
+.edge-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.edge-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.edge-card:hover { border-color: var(--border-2); }
+
+.edge-card-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.edge-card-q {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-1);
+  flex: 1;
+  line-height: 1.5;
+}
+
+.edge-card-body {
+  padding: 12px 14px;
+}
+
+.edge-ruling {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.edge-ruling-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  flex-shrink: 0;
+  margin-top: 2px;
+  width: 52px;
+}
+
+.edge-ruling-val {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.edge-ruling-val strong { color: var(--text-1); font-weight: 500; }
+
+.edge-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0;
+}
+
+.edge-rationale {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* ─── MINI TASK DIAGRAM ──────────────────────────────────── */
+.task-diagram {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 2;
+  color: var(--text-3);
+}
+
+.diag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diag-block {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.diag-chrome  { background: var(--bg-4); color: var(--text-3); border: 1px dashed var(--border-2); }
+.diag-zone    { background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple-border); }
+.diag-footer  { background: var(--bg-4); color: var(--text-3); border: 1px dashed var(--border-2); }
+.diag-nested  { background: var(--bg-3); color: var(--text-3); border: 1px solid var(--border); margin-left: 24px; font-size: 10px; }
+.diag-indent  { margin-left: 24px; }
+.diag-bracket { color: var(--text-4); }
+
+.diag-count-note {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+/* ─── PSEUDOCODE ─────────────────────────────────────────── */
+.pseudocode {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 2;
+  color: var(--text-2);
+  overflow-x: auto;
+}
+
+.pseudo-fn   { color: var(--blue-text); }
+.pseudo-kw   { color: var(--purple); }
+.pseudo-val  { color: var(--green-text); }
+.pseudo-num  { color: var(--amber-text); }
+.pseudo-cmt  { color: var(--text-3); font-style: italic; }
+.pseudo-op   { color: var(--text-2); }
+.pseudo-type { color: var(--amber-text); }
+
+/* ─── INLINE TAG ─────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--bg-4);
+  color: var(--text-2);
+  border: 1px solid var(--border-2);
+}
+
+/* ─── CALLOUT ────────────────────────────────────────────── */
+.callout {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+}
+.callout.info { border-color: var(--blue-border); background: var(--blue-dim); }
+.callout.warn { border-color: var(--amber-border); background: var(--amber-dim); }
+.callout-icon { flex-shrink: 0; margin-top: 1px; font-size: 14px; }
+.callout-title { font-size: 12px; font-weight: 500; color: var(--text-1); margin-bottom: 3px; }
+.callout-body  { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+/* ─── SUMMARY TABLE ──────────────────────────────────────── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.summary-cell {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px;
+}
+
+.summary-cell-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+.summary-cell-val {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+  line-height: 1.4;
+}
+
+.summary-cell-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-2); }
+
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── TOP NAV ────────────────────────────────────── -->
+  <div class="topnav">
+    <div class="topnav-badge">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      SPEC
+    </div>
+    <div>
+      <div class="topnav-title">TaskMeta Placement — Engineering Contract</div>
+    </div>
+    <div class="topnav-sub">components/TaskMeta</div>
+    <div class="topnav-version">v1.0 · Feb 2026</div>
+  </div>
+
+  <!-- ── TABS ──────────────────────────────────────── -->
+  <div class="tab-row">
+    <button class="tab active" onclick="switchTab('definition')">
+      <span class="tab-num">1</span> Zone Definition
+    </button>
+    <button class="tab" onclick="switchTab('interactive')">
+      <span class="tab-num">2</span> Interactive Counter
+    </button>
+    <button class="tab" onclick="switchTab('edgecases')">
+      <span class="tab-num">3</span> Edge Cases
+    </button>
+    <button class="tab" onclick="switchTab('logic')">
+      <span class="tab-num">4</span> Decision Logic
+    </button>
+    <button class="tab" onclick="switchTab('contract')">
+      <span class="tab-num">5</span> Full Contract
+    </button>
+  </div>
+
+  <!-- ── MAIN ──────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- ══════════════════════════════════════════════
+         TAB 1 — ZONE DEFINITION
+    ══════════════════════════════════════════════ -->
+    <div class="panel active" id="panel-definition">
+
+      <div class="section-label">What is a zone?</div>
+      <div class="section-gap">
+        <div class="card">
+          <div class="card-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            <span class="card-title">Formal Definition</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:14px;color:var(--text-1);line-height:1.7;margin-bottom:16px;">
+              A <strong>zone</strong> is any <strong>direct child of the task body</strong> that renders as a visually bounded, top-level content block — evaluated once from the form definition at render time, not from runtime state.
+            </p>
+            <div class="callout info">
+              <span class="callout-icon">🔑</span>
+              <div>
+                <div class="callout-title">The key word is "top-level"</div>
+                <div class="callout-body">Nesting does not create new zones. Children inside a zone belong to their parent. The zone count is stable — it does not change as the user interacts with the page.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Task body anatomy</div>
+      <div class="section-gap">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Structural diagram</div>
+            <div class="task-diagram">
+              <div class="diag-row"><span class="diag-chrome diag-block">header-bar</span> <span style="color:var(--text-4)">// chrome — not counted</span></div>
+              <div style="height:4px"></div>
+              <div class="diag-row"><span style="color:var(--text-4)">task-body {</span></div>
+              <div class="diag-indent diag-row"><span class="diag-chrome diag-block">title-block</span> <span style="color:var(--text-4)">// chrome</span></div>
+              <div class="diag-indent diag-row"><span class="diag-zone diag-block">zone 1</span> <span style="color:var(--text-4)">→ vendor-card</span></div>
+              <div class="diag-indent" style="margin-left:48px;">
+                <div class="diag-row"><span class="diag-nested diag-block">nested: meta-row</span></div>
+                <div class="diag-row"><span class="diag-nested diag-block">nested: accordion</span></div>
+              </div>
+              <div class="diag-indent diag-row"><span class="diag-zone diag-block">zone 2</span> <span style="color:var(--text-4)">→ offer-tab-group</span></div>
+              <div class="diag-indent" style="margin-left:48px;">
+                <div class="diag-row"><span class="diag-nested diag-block">nested: tab[0] form</span></div>
+                <div class="diag-row"><span class="diag-nested diag-block">nested: tab[1] form</span></div>
+              </div>
+              <div class="diag-indent diag-row"><span class="diag-zone diag-block">zone 3</span> <span style="color:var(--text-4)">→ reason-card</span></div>
+              <div class="diag-row"><span style="color:var(--text-4)">}</span></div>
+              <div style="height:4px"></div>
+              <div class="diag-row"><span class="diag-footer diag-block">footer</span> <span style="color:var(--text-4)">// not counted</span></div>
+              <div class="diag-count-note">zone_count = 3 → placement = "header"</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">What qualifies as a zone</div>
+            <table class="def-table" style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r)">
+              <thead>
+                <tr>
+                  <th>Component type</th>
+                  <th>Counts?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color:var(--text-1)">Card (vendor, contract, budget…)</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Accordion (any state)</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Tab group (any tab count)</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Form section with heading</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Standalone top-level widget</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Reason / textarea card</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Title block</td>
+                  <td><span class="pill pill-no">✗ no — chrome</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Header bar</td>
+                  <td><span class="pill pill-no">✗ no — chrome</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Footer / action buttons</td>
+                  <td><span class="pill pill-no">✗ no — chrome</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Nested child inside a zone</td>
+                  <td><span class="pill pill-no">✗ no — nested</span></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Hidden / conditional (not yet rendered)</td>
+                  <td><span class="pill pill-no">✗ no — not rendered</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">The rule</div>
+      <div class="section-gap">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:var(--blue-dim);border:1px solid var(--blue-border);border-radius:var(--r-lg);padding:20px;">
+            <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--blue-text);margin-bottom:12px;">Header placement</div>
+            <div style="font-family:var(--font-mono);font-size:28px;font-weight:500;color:var(--blue-text);margin-bottom:8px;">≥ 3 zones</div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Body is dense. User needs all vertical space for content. Assignee + due date persist in the header bar as ambient context.</div>
+          </div>
+          <div style="background:var(--green-dim);border:1px solid var(--green-border);border-radius:var(--r-lg);padding:20px;">
+            <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--green-text);margin-bottom:12px;">Body placement</div>
+            <div style="font-family:var(--font-mono);font-size:28px;font-weight:500;color:var(--green-text);margin-bottom:8px;">≤ 2 zones</div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Body is sparse. Task is decision-focused. Assignee + due date sit below the title as reading context before the user acts.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="urgency-box">
+        <span class="urgency-icon">⚡</span>
+        <div>
+          <div class="urgency-title">Urgency override — always supersedes zone count</div>
+          <div class="urgency-body">If <span class="tag">due_date ≤ now + 24h</span> OR <span class="tag">due_date &lt; now</span>, placement is always <strong style="color:var(--amber-text)">"header"</strong> regardless of zone count. Reason: an overdue or imminent date needs to remain visible while the user works through content. Rendered with a warning colour treatment.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 2 — INTERACTIVE COUNTER
+    ══════════════════════════════════════════════ -->
+    <div class="panel" id="panel-interactive">
+
+      <div class="section-label">Try it — build a task and see the placement result</div>
+      <div class="section-gap">
+        <div class="callout info" style="margin-bottom:16px;">
+          <span class="callout-icon">ℹ️</span>
+          <div>
+            <div class="callout-body">Click the toggle on any zone to include/exclude it. The counter and placement result update live. This is exactly how the system will evaluate placement at render time.</div>
+          </div>
+        </div>
+
+        <div class="zone-builder">
+          <div class="zone-builder-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span class="card-title">Zone builder</span>
+            <span class="card-sub">toggle zones to include or exclude</span>
+          </div>
+          <div class="zone-builder-body">
+            <!-- Canvas -->
+            <div class="zone-canvas" id="zone-canvas">
+
+              <div style="font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-4);margin-bottom:2px;">not counted — always chrome</div>
+
+              <div class="zone-item not-counts" style="opacity:0.3;cursor:default;">
+                <div class="zone-item-icon">🏷️</div>
+                <div class="zone-item-info">
+                  <div class="zone-item-name">Title block</div>
+                  <div class="zone-item-type">chrome · always excluded</div>
+                </div>
+              </div>
+
+              <div style="font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin:10px 0 4px;">content zones — click to toggle</div>
+
+              <!-- Zone items -->
+              <div class="zone-item counts" data-zone="vendor" onclick="toggleZone(this)">
+                <div class="zone-item-icon">🏢</div>
+                <div class="zone-item-info">
+                  <div class="zone-item-name">Vendor card</div>
+                  <div class="zone-item-type">card · top-level</div>
+                </div>
+                <span class="pill pill-yes zone-item-badge">counts</span>
+                <div class="zone-toggle" title="Remove this zone">−</div>
+              </div>
+
+              <div class="zone-item counts" data-zone="tabs" onclick="toggleZone(this)">
+                <div class="zone-item-icon">📑</div>
+                <div class="zone-item-info">
+                  <div class="zone-item-name">Offer tab group</div>
+                  <div class="zone-item-type">tab-group · regardless of tab count</div>
+                </div>
+                <span class="pill pill-yes zone-item-badge">counts</span>
+                <div class="zone-toggle">−</div>
+              </div>
+
+              <div class="zone-item counts" data-zone="reason" onclick="toggleZone(this)">
+                <div class="zone-item-icon">✏️</div>
+                <div class="zone-item-info">
+                  <div class="zone-item-name">Reason / decision textarea</div>
+                  <div class="zone-item-type">card · top-level</div>
+                </div>
+                <span class="pill pill-yes zone-item-badge">counts</span>
+                <div class="zone-toggle">−</div>
+              </div>
+
+              <div class="zone-item not-counts" data-zone="accordion" onclick="toggleZone(this)">
+                <div class="zone-item-icon">📋</div>
+                <div class="zone-item-info">
+                  <div class="zone-item-name">Request details accordion</div>
+                  <div class="zone-item-type">accordion · nested inside vendor card</div>
+                </div>
+                <span class="pill pill-no zone-item-badge">nested — no</span>
+                <div class="zone-toggle">+</div>
+              </div>
+
+              <div class="zone-item not-counts" data-zone="previous" onclick="toggleZone(this)">
+                <div class="zone-item-icon">📄</div>
+                <div class="zone-item-info">
+                  <div class="zone-item-name">Previous contract card</div>
+                  <div class="zone-item-type">card · add if top-level in this task</div>
+                </div>
+                <span class="pill pill-no zone-item-badge">excluded</span>
+                <div class="zone-toggle">+</div>
+              </div>
+
+              <div class="zone-item not-counts" data-zone="budget" onclick="toggleZone(this)">
+                <div class="zone-item-icon">💰</div>
+                <div class="zone-item-info">
+                  <div class="zone-item-name">Budget variance widget</div>
+                  <div class="zone-item-type">widget · standalone top-level</div>
+                </div>
+                <span class="pill pill-no zone-item-badge">excluded</span>
+                <div class="zone-toggle">+</div>
+              </div>
+
+            </div>
+
+            <!-- Sidebar result -->
+            <div class="zone-sidebar">
+              <div class="zone-counter">
+                <div class="zone-count-num" id="zone-num" style="color:var(--blue-text)">3</div>
+                <div class="zone-count-label">zones counted</div>
+              </div>
+
+              <div class="placement-result" id="placement-result" style="border-color:var(--blue-border);background:var(--blue-dim);">
+                <div class="placement-result-label">Placement result</div>
+                <div class="placement-result-value" id="placement-val" style="color:var(--blue-text)">"header"</div>
+                <div class="placement-result-reason" id="placement-reason">3 or more zones — body is dense, meta goes in the header bar</div>
+              </div>
+
+              <div class="threshold-bar">
+                <div class="threshold-label">Zone threshold</div>
+                <div style="position:relative;padding-top:20px;">
+                  <div class="threshold-track">
+                    <div class="threshold-fill" id="threshold-fill" style="width:60%"></div>
+                    <div class="threshold-marker">
+                      <div class="threshold-marker-label">threshold = 3</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="threshold-ticks">
+                  <span>0</span>
+                  <span>1</span>
+                  <span>2</span>
+                  <span style="color:var(--purple)">3</span>
+                  <span>4</span>
+                  <span>5+</span>
+                </div>
+              </div>
+
+              <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;">
+                <div style="font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:8px;">Urgency override</div>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text-2);">
+                  <input type="checkbox" id="urgency-toggle" onchange="updateResult()" style="accent-color:var(--amber);width:14px;height:14px;">
+                  Due within 24h / overdue
+                </label>
+                <div style="margin-top:8px;font-size:11px;color:var(--text-3);line-height:1.5;" id="urgency-note">
+                  When active, overrides zone count → always "header" with warning treatment
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 3 — EDGE CASES
+    ══════════════════════════════════════════════ -->
+    <div class="panel" id="panel-edgecases">
+
+      <div class="section-label">Maryna's questions — ruled and rationale</div>
+      <div class="section-gap">
+        <div class="edge-grid">
+
+          <!-- Edge 1 -->
+          <div class="edge-card">
+            <div class="edge-card-header">
+              <span style="font-size:18px;flex-shrink:0">📋</span>
+              <div class="edge-card-q">Does a collapsed accordion count as one zone, or the zones inside it?</div>
+            </div>
+            <div class="edge-card-body">
+              <div class="edge-ruling">
+                <span class="edge-ruling-label">Ruling</span>
+                <span class="edge-ruling-val"><strong>One zone, always.</strong> Collapsed or expanded state is irrelevant.</span>
+              </div>
+              <div class="edge-divider"></div>
+              <div class="edge-ruling">
+                <span class="edge-ruling-label">Why</span>
+                <span class="edge-ruling-val">Open/closed is runtime state, not form definition state. If we counted zones inside an accordion, the total would change as the user interacts — meaning the layout could <em>shift mid-session</em> as someone opens an accordion. That's a worse UX than any edge case from this rule.</span>
+              </div>
+              <div class="edge-divider"></div>
+              <div class="edge-rationale">Exception: if the accordion is nested <em>inside</em> another card (e.g. "Request Details" inside vendor card), it counts as zero — it belongs to its parent zone.</div>
+            </div>
+          </div>
+
+          <!-- Edge 2 -->
+          <div class="edge-card">
+            <div class="edge-card-header">
+              <span style="font-size:18px;flex-shrink:0">🔑</span>
+              <div class="edge-card-q">Does a single key-value widget count as a zone?</div>
+            </div>
+            <div class="edge-card-body">
+              <div class="edge-ruling">
+                <span class="edge-ruling-label">Ruling</span>
+                <span class="edge-ruling-val"><strong>Only if it's a standalone top-level container.</strong></span>
+              </div>
+              <div class="edge-divider"></div>
+              <div class="edge-ruling">
+                <span class="edge-ruling-label">Test</span>
+                <span class="edge-ruling-val">Does it have its own card border/visual container at the top level of the task body? <strong>Yes → 1 zone. No → belongs to parent zone, count 0.</strong></span>
+              </div>
+              <div class="edge-divider"></div>
+              <div class="edge-rationale">A key-value block embedded inside a vendor card is part of that card. A budget summary rendered as its own card-level block is a distinct zone.</div>
+            </div>
+          </div>
+
+          <!-- Edge 3 -->
+          <div class="edge-card">
+            <div class="edge-card-header">
+              <span style="font-size:18px;flex-shrink:0">📑</span>
+              <div class="edge-card-q">Is an offer tab group one zone or N zones based on how many offers exist?</div>
+            </div>
+            <div class="edge-card-body">
+              <div class="edge-ruling">
+                <span class="edge-ruling-label">Ruling</span>
+                <span class="edge-ruling-val"><strong>One zone.</strong> Tab count is irrelevant.</span>
+              </div>
+              <div class="edge-divider"></div>
+              <div class="edge-ruling">
+                <span class="edge-ruling-label">Why</span>
+                <span class="edge-ruling-val">The tab group is the container; individual tabs are its contents. Offer count is runtime data — it changes as users add/remove offers. Zone count must be stable at form definition time.</span>
+              </div>
+              <div class="edge-divider"></div>
+              <div class="edge-rationale">Same principle as the accordion: the container counts once, regardless of what's inside it or how many variants exist at runtime.</div>
+            </div>
+          </div>
+
+          <!-- Edge 4 — the unraised one -->
+          <div class="edge-card" style="border-color:var(--amber-border);">
+            <div class="edge-card-header" style="border-color:var(--amber-border);">
+              <span style="font-size:18px;flex-shrink:0">⚠️</span>
+              <div class="edge-card-q">Does the reason/textarea card count — it appears in every task type?</div>
+            </div>
+            <div class="edge-card-body">
+              <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <span class="pill pill-maybe">open question</span>
+                <span style="font-size:11px;color:var(--amber-text);font-style:italic;align-self:center;">Design decision needed before engineering builds</span>
+              </div>
+              <div class="edge-ruling">
+                <span class="edge-ruling-label">Option A</span>
+                <span class="edge-ruling-val"><strong>Count it.</strong> Any task with 2 content zones + a reason card has 3 zones total → header. Rationale: if there are 2 substantive zones AND a required action input, the body is genuinely busy.</span>
+              </div>
+              <div class="edge-divider"></div>
+              <div class="edge-ruling">
+                <span class="edge-ruling-label">Option B</span>
+                <span class="edge-ruling-val"><strong>Exclude it</strong> from zone count as structural chrome (like the title block), since it's always present and therefore not meaningful density signal.</span>
+              </div>
+              <div class="edge-divider"></div>
+              <div class="edge-rationale" style="color:var(--amber-text)">Recommendation: Option A. The reason card adds real visual height — a task with 2 cards + textarea is genuinely dense. Maryna to confirm before this goes to engineering.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="section-label">Conditional / hidden zones</div>
+      <div class="section-gap">
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <div>
+            <div class="callout-title">Only count zones that are rendered at task open time</div>
+            <div class="callout-body">Conditional zones that are hidden at task load (e.g. a risk alert that only appears when budget is exceeded) do <strong>not</strong> count toward the zone total, even if they may appear later. Zone count is evaluated once on task mount from the initial form definition render. If a conditional zone becomes visible after user interaction, the placement does not recalculate — that would cause layout shift.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 4 — DECISION LOGIC
+    ══════════════════════════════════════════════ -->
+    <div class="panel" id="panel-logic">
+
+      <div class="section-label">Pseudocode — evaluatePlacement()</div>
+      <div class="section-gap">
+        <div class="pseudocode"><span class="pseudo-fn">function</span> <span class="pseudo-fn">evaluatePlacement</span>(<span class="pseudo-type">formDefinition</span>, <span class="pseudo-type">taskMeta</span>):
+
+  <span class="pseudo-cmt">// 1. Urgency override — always checked first</span>
+  <span class="pseudo-kw">if</span> taskMeta.dueDate <span class="pseudo-op">≤</span> <span class="pseudo-fn">now</span>() <span class="pseudo-op">+</span> <span class="pseudo-num">24h</span>:
+    <span class="pseudo-kw">return</span> { placement: <span class="pseudo-val">"header"</span>, reason: <span class="pseudo-val">"urgency-override"</span>, urgent: <span class="pseudo-val">true</span> }
+
+  <span class="pseudo-cmt">// 2. Count top-level zones from form definition</span>
+  zones <span class="pseudo-op">=</span> formDefinition.body
+    .<span class="pseudo-fn">directChildren</span>()
+    .<span class="pseudo-fn">filter</span>(el <span class="pseudo-op">→</span> <span class="pseudo-fn">isQualifyingZone</span>(el) <span class="pseudo-op">&&</span> <span class="pseudo-fn">isRenderedOnMount</span>(el))
+
+  zoneCount <span class="pseudo-op">=</span> zones.<span class="pseudo-fn">length</span>
+
+  <span class="pseudo-cmt">// 3. Apply threshold rule</span>
+  <span class="pseudo-kw">if</span> zoneCount <span class="pseudo-op">>=</span> <span class="pseudo-num">3</span>:
+    <span class="pseudo-kw">return</span> { placement: <span class="pseudo-val">"header"</span>, reason: <span class="pseudo-val">"dense"</span>, zoneCount }
+  <span class="pseudo-kw">else</span>:
+    <span class="pseudo-kw">return</span> { placement: <span class="pseudo-val">"body"</span>, reason: <span class="pseudo-val">"sparse"</span>, zoneCount }
+
+
+<span class="pseudo-fn">function</span> <span class="pseudo-fn">isQualifyingZone</span>(<span class="pseudo-type">element</span>):
+  <span class="pseudo-kw">return</span> element.type <span class="pseudo-op">in</span> [
+    <span class="pseudo-val">"card"</span>, <span class="pseudo-val">"accordion"</span>, <span class="pseudo-val">"tab-group"</span>,
+    <span class="pseudo-val">"form-section"</span>, <span class="pseudo-val">"standalone-widget"</span>, <span class="pseudo-val">"textarea-card"</span>
+  ]
+
+<span class="pseudo-fn">function</span> <span class="pseudo-fn">isRenderedOnMount</span>(<span class="pseudo-type">element</span>):
+  <span class="pseudo-cmt">// Conditional zones not yet visible = excluded</span>
+  <span class="pseudo-kw">return</span> element.condition <span class="pseudo-op">==</span> <span class="pseudo-val">null</span> <span class="pseudo-op">||</span> <span class="pseudo-fn">evaluateCondition</span>(element.condition) <span class="pseudo-op">==</span> <span class="pseudo-val">true</span></div>
+      </div>
+
+      <div class="section-label">TaskMeta component API</div>
+      <div class="section-gap">
+        <div class="code-block"><span class="cmt">// Component receives placement as a derived prop — never stored in state</span>
+
+<span class="kw">type</span> <span class="key">TaskMetaPlacement</span> = <span class="str">"header"</span> | <span class="str">"body"</span>
+
+<span class="kw">interface</span> <span class="key">TaskMetaProps</span> {
+  assignee:   <span class="key">User</span>
+  dueDate:    <span class="key">Date</span>
+  placement:  <span class="key">TaskMetaPlacement</span>  <span class="cmt">// computed externally, never self-derived</span>
+  urgent?:    <span class="key">boolean</span>             <span class="cmt">// true when urgency override applies</span>
+  editable?:  <span class="key">boolean</span>             <span class="cmt">// default true — shows pencil/edit affordance</span>
+}
+
+<span class="cmt">// Usage — parent computes placement, passes it down</span>
+<span class="kw">const</span> { placement, urgent } = <span class="fn">evaluatePlacement</span>(formDefinition, taskMeta)
+
+<span class="cmt">// In task header bar (dense tasks):</span>
+{ placement === <span class="str">"header"</span> && <span class="key">&lt;TaskMeta</span> placement=<span class="str">"header"</span> urgent={urgent} .../> }
+
+<span class="cmt">// In task body, below title (sparse tasks):</span>
+{ placement === <span class="str">"body"</span> && <span class="key">&lt;TaskMeta</span> placement=<span class="str">"body"</span> .../> }</div>
+      </div>
+
+      <div class="section-label">Evaluation timing</div>
+      <div class="section-gap">
+        <div class="card">
+          <div class="card-body">
+            <table class="def-table">
+              <thead>
+                <tr>
+                  <th>Question</th>
+                  <th>Answer</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color:var(--text-1)">When is placement evaluated?</td>
+                  <td style="color:var(--text-2)">Once, on task mount. Not on every render.</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Does it re-evaluate if the user adds a zone?</td>
+                  <td style="color:var(--text-2)">No. Placement is stable for the session. Re-evaluate on next task open.</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Does it re-evaluate if the due date changes?</td>
+                  <td style="color:var(--text-2)">Yes — urgency override watches dueDate reactively. Placement can switch to "header" + urgent if date is edited to be imminent.</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Where does the result live?</td>
+                  <td style="color:var(--text-2)">Derived at render time. Never persisted to backend. Never stored in form config.</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Can admins override it?</td>
+                  <td style="color:var(--text-2)">Future: a <span class="tag">forceHeaderMeta: boolean</span> flag in task settings panel. Not in v1.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB 5 — FULL CONTRACT
+    ══════════════════════════════════════════════ -->
+    <div class="panel" id="panel-contract">
+
+      <div class="section-label">Summary — quick reference</div>
+      <div class="section-gap">
+        <div class="summary-grid">
+          <div class="summary-cell">
+            <div class="summary-cell-label">Zone definition</div>
+            <div class="summary-cell-val">Direct child of task body</div>
+            <div class="summary-cell-sub">with its own visual boundary. Top-level only.</div>
+          </div>
+          <div class="summary-cell">
+            <div class="summary-cell-label">Threshold</div>
+            <div class="summary-cell-val">3 or more zones</div>
+            <div class="summary-cell-sub">→ header. 2 or fewer → body.</div>
+          </div>
+          <div class="summary-cell">
+            <div class="summary-cell-label">Evaluated</div>
+            <div class="summary-cell-val">Once on mount</div>
+            <div class="summary-cell-sub">From form definition. Stable for session.</div>
+          </div>
+          <div class="summary-cell">
+            <div class="summary-cell-label">Stored where</div>
+            <div class="summary-cell-val">Nowhere</div>
+            <div class="summary-cell-sub">Derived at render. Never in config or DB.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Full qualifying / exclusion list</div>
+      <div class="section-gap">
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <table class="def-table">
+              <thead>
+                <tr>
+                  <th>Element</th>
+                  <th>Counts?</th>
+                  <th>Condition</th>
+                  <th>Rationale</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color:var(--text-1)">Card (any variant)</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                  <td style="color:var(--text-2)">Top-level only</td>
+                  <td style="color:var(--text-3)">Visually bounded, independent unit</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Accordion</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                  <td style="color:var(--text-2)">Top-level only, any open/closed state</td>
+                  <td style="color:var(--text-3)">Container counts once; interior is nested</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Tab group</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                  <td style="color:var(--text-2)">Top-level only, any tab count</td>
+                  <td style="color:var(--text-3)">Container counts once; tabs are nested</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Form section with heading</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                  <td style="color:var(--text-2)">Top-level only</td>
+                  <td style="color:var(--text-3)">Structurally independent section</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Standalone widget (top-level)</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                  <td style="color:var(--text-2)">Must have own card boundary</td>
+                  <td style="color:var(--text-3)">Independent visual unit</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-1)">Reason / textarea card</td>
+                  <td><span class="pill pill-yes">✓ yes</span></td>
+                  <td style="color:var(--text-2)">When rendered as own card</td>
+                  <td style="color:var(--text-3)">Adds real visual height; body is genuinely busier</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Title block</td>
+                  <td><span class="pill pill-no">✗ no</span></td>
+                  <td style="color:var(--text-2)">Always excluded</td>
+                  <td style="color:var(--text-3)">Chrome — always present, not content</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Header bar</td>
+                  <td><span class="pill pill-no">✗ no</span></td>
+                  <td style="color:var(--text-2)">Always excluded</td>
+                  <td style="color:var(--text-3)">Chrome</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Footer / action buttons</td>
+                  <td><span class="pill pill-no">✗ no</span></td>
+                  <td style="color:var(--text-2)">Always excluded</td>
+                  <td style="color:var(--text-3)">Chrome</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Nested child inside a zone</td>
+                  <td><span class="pill pill-no">✗ no</span></td>
+                  <td style="color:var(--text-2)">Any depth</td>
+                  <td style="color:var(--text-3)">Belongs to parent zone's count</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--text-2)">Hidden / conditional (not rendered on mount)</td>
+                  <td><span class="pill pill-no">✗ no</span></td>
+                  <td style="color:var(--text-2)">Until rendered</td>
+                  <td style="color:var(--text-3)">Zone count must be stable — no layout shift</td>
+                </tr>
+                <tr>
+                  <td style="color:var(--amber-text)">Urgency override</td>
+                  <td><span class="pill pill-maybe">⚡ overrides</span></td>
+                  <td style="color:var(--text-2)">dueDate ≤ now + 24h</td>
+                  <td style="color:var(--text-3)">Always → header, regardless of zone count</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Open question requiring design sign-off</div>
+      <div class="section-gap">
+        <div class="urgency-box" style="background:var(--amber-dim);border-color:var(--amber-border);">
+          <span class="urgency-icon">❓</span>
+          <div>
+            <div class="urgency-title">Decision needed: does the reason/textarea card count toward the zone total?</div>
+            <div class="urgency-body" style="margin-top:6px">
+              <strong style="color:var(--text-1)">Option A (recommended):</strong> Count it. A task with 2 content zones + reason card = 3 zones → header. The textarea adds real visual weight and the body genuinely is dense.<br><br>
+              <strong style="color:var(--text-1)">Option B:</strong> Exclude it as structural chrome, since it's always present. Only explicit content zones count.<br><br>
+              <span style="color:var(--amber-text)">Maryna to confirm. Engineering should not build until this is resolved.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── Interactive zone counter ──────────────────────
+function toggleZone(el) {
+  const isCounting = el.classList.contains('counts');
+  const badge = el.querySelector('.zone-item-badge');
+  const toggle = el.querySelector('.zone-toggle');
+  const typeEl = el.querySelector('.zone-item-type');
+
+  if (isCounting) {
+    el.classList.remove('counts');
+    el.classList.add('not-counts');
+    badge.className = 'pill pill-no zone-item-badge';
+    badge.textContent = 'excluded';
+    toggle.textContent = '+';
+  } else {
+    el.classList.remove('not-counts');
+    el.classList.add('counts');
+    badge.className = 'pill pill-yes zone-item-badge';
+    badge.textContent = 'counts';
+    toggle.textContent = '−';
+  }
+  updateResult();
+}
+
+function updateResult() {
+  const countingZones = document.querySelectorAll('#zone-canvas .zone-item.counts').length;
+  const urgent = document.getElementById('urgency-toggle').checked;
+
+  const numEl = document.getElementById('zone-num');
+  const resultEl = document.getElementById('placement-result');
+  const valEl = document.getElementById('placement-val');
+  const reasonEl = document.getElementById('placement-reason');
+  const fillEl = document.getElementById('threshold-fill');
+
+  numEl.textContent = countingZones;
+
+  // Fill bar: max 5 zones shown
+  const fillPct = Math.min((countingZones / 5) * 100, 100);
+  fillEl.style.width = fillPct + '%';
+
+  if (urgent) {
+    numEl.style.color = 'var(--amber-text)';
+    resultEl.style.borderColor = 'var(--amber-border)';
+    resultEl.style.background = 'var(--amber-dim)';
+    valEl.style.color = 'var(--amber-text)';
+    valEl.textContent = '"header"';
+    reasonEl.textContent = 'Urgency override — due within 24h or overdue, regardless of zone count';
+    fillEl.style.background = 'var(--amber)';
+  } else if (countingZones >= 3) {
+    numEl.style.color = 'var(--blue-text)';
+    resultEl.style.borderColor = 'var(--blue-border)';
+    resultEl.style.background = 'var(--blue-dim)';
+    valEl.style.color = 'var(--blue-text)';
+    valEl.textContent = '"header"';
+    reasonEl.textContent = countingZones + ' zones — body is dense, meta goes in the header bar';
+    fillEl.style.background = 'var(--blue)';
+  } else {
+    numEl.style.color = 'var(--green-text)';
+    resultEl.style.borderColor = 'var(--green-border)';
+    resultEl.style.background = 'var(--green-dim)';
+    valEl.style.color = 'var(--green-text)';
+    valEl.textContent = '"body"';
+    reasonEl.textContent = countingZones + ' zone' + (countingZones === 1 ? '' : 's') + ' — body is sparse, meta sits below the title';
+    fillEl.style.background = 'var(--green)';
+  }
+
+  // Animate the number
+  numEl.style.transform = 'scale(1.15)';
+  setTimeout(() => { numEl.style.transform = 'scale(1)'; }, 150);
+}
+</script>
+</body>
+</html>

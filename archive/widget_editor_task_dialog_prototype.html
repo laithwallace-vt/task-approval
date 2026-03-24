@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Widget Editor + Task Dialog Prototype</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#6B4EFF;--purple-light:rgba(107,78,255,0.08);--purple-bd:rgba(107,78,255,0.2);
+  --green:#16a34a;--green-light:rgba(22,163,74,0.08);--green-bd:rgba(22,163,74,0.2);
+  --red:#dc2626;--red-light:rgba(220,38,38,0.08);--red-bd:rgba(220,38,38,0.2);
+  --amber:#d97706;--amber-light:rgba(217,119,6,0.08);
+  --text1:#0a0f1e;--text2:rgba(10,15,30,0.55);--text3:rgba(10,15,30,0.35);
+  --bg:#ffffff;--bg2:#f9fafb;--bg3:#f3f4f6;
+  --bd:rgba(0,0,0,0.08);--bd2:rgba(0,0,0,0.15);
+  --r:6px;--rl:10px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:var(--text1);background:#f0f1f5;padding:32px;min-height:100vh}
+
+.page-wrap{max-width:800px;margin:0 auto;background:var(--bg);border-radius:12px;border:1px solid var(--bd);overflow:hidden;padding:24px}
+
+.page-title{font-size:18px;font-weight:600;color:var(--text1);margin-bottom:4px;letter-spacing:-0.02em}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:24px}
+.tab{padding:8px 16px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple);font-weight:500}
+.tab:hover:not(.active){color:var(--text1)}
+
+.surface{display:none}
+.surface.active{display:block}
+
+.annot-bar{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 14px;margin-bottom:20px;font-size:12px;color:var(--text2);line-height:1.5}
+.annot-bar strong{color:var(--text1);font-weight:500}
+.annot-chip{display:inline-flex;align-items:center;gap:4px;background:var(--purple-light);border:1px solid var(--purple-bd);color:var(--purple);border-radius:4px;padding:1px 6px;font-size:11px;font-weight:500;margin-left:4px}
+.annot-chip.green{background:var(--green-light);border-color:var(--green-bd);color:var(--green)}
+.annot-chip.red{background:var(--red-light);border-color:var(--red-bd);color:var(--red)}
+
+.widget-list{display:flex;flex-direction:column;gap:8px}
+
+.wcard{background:var(--bg);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;transition:border-color 0.15s}
+.wcard:hover{border-color:var(--bd2)}
+.wcard-head{display:flex;align-items:flex-start;padding:12px 14px 10px;gap:10px;border-bottom:1px solid var(--bd)}
+.wcard-drag{color:var(--text3);font-size:14px;cursor:grab;padding-top:1px;flex-shrink:0;display:flex;flex-direction:column;gap:2px}
+.drag-dot-row{display:flex;gap:2px}
+.drag-dot{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:0.5}
+.wcard-meta{flex:1}
+.wcard-badge{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:3px}
+.wcard-name{font-size:14px;font-weight:500;color:var(--text1);margin-bottom:2px}
+.wcard-desc{font-size:12px;color:var(--text3);line-height:1.45}
+.wcard-remove{font-size:12px;color:var(--text3);cursor:pointer;flex-shrink:0;padding:2px 0;white-space:nowrap}
+.wcard-remove:hover{color:var(--red)}
+
+.wcard-fields{padding:8px 14px;border-bottom:1px solid var(--bd);background:var(--bg2)}
+.field-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid var(--bd);color:var(--purple)}
+.field-row:last-child{border-bottom:none}
+.field-type{color:var(--text3);font-size:11px}
+.field-add{color:var(--text3);font-size:12px;padding:4px 0;cursor:pointer;display:flex;align-items:center;gap:4px}
+.field-add:hover{color:var(--purple)}
+
+.wcard-controls{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;flex-wrap:wrap;gap:8px}
+
+.seg{display:flex;gap:0;border:1px solid var(--bd2);border-radius:var(--r);overflow:hidden;background:var(--bg2)}
+.seg-btn{padding:5px 12px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all 0.12s;border:none;background:transparent}
+.seg-btn.active{background:var(--bg);color:var(--text1);box-shadow:inset 0 0 0 1px var(--bd2)}
+.seg-btn:hover:not(.active){color:var(--text1);background:var(--bg)}
+.seg-divider{width:1px;background:var(--bd2);flex-shrink:0}
+
+.notif-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
+.toggle{position:relative;width:32px;height:18px;cursor:pointer;flex-shrink:0}
+.toggle-track{width:32px;height:18px;border-radius:9px;background:rgba(0,0,0,0.15);transition:background 0.15s;position:relative}
+.toggle.on .toggle-track{background:var(--purple)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:white;transition:left 0.15s;box-shadow:0 1px 2px rgba(0,0,0,0.2)}
+.toggle.on .toggle-thumb{left:16px}
+
+.notif-chip{display:inline-flex;align-items:center;gap:4px;background:var(--purple-light);border:1px solid var(--purple-bd);color:var(--purple);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:500;opacity:0;transition:opacity 0.2s}
+.notif-chip.visible{opacity:1}
+
+.add-widget{display:flex;align-items:center;gap:6px;padding:10px 14px;color:var(--text3);font-size:13px;cursor:pointer;border:1px dashed var(--bd);border-radius:var(--r);margin-top:8px}
+.add-widget:hover{color:var(--purple);border-color:var(--purple-bd)}
+
+.why-box{margin-top:20px;border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden}
+.why-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg2);cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);border-bottom:1px solid var(--bd);user-select:none}
+.why-head:hover{color:var(--text1)}
+.why-body{padding:14px;display:none;flex-direction:column;gap:10px}
+.why-body.open{display:flex}
+.why-row{display:flex;gap:10px;font-size:12px;line-height:1.5}
+.why-icon{width:18px;height:18px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.why-icon.good{background:var(--green-light);color:var(--green)}
+.why-icon.bad{background:var(--red-light);color:var(--red)}
+.why-text{color:var(--text2)}
+.why-text strong{color:var(--text1);font-weight:500}
+
+.dialog-wrap{position:relative;min-height:560px;background:rgba(0,0,0,0.35);border-radius:var(--rl);display:flex;align-items:flex-start;justify-content:center;padding:20px}
+.dialog{width:100%;max-width:680px;background:var(--bg);border:1px solid var(--bd2);border-radius:var(--rl);overflow:hidden}
+.dialog-header{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+.dialog-task-type{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)}
+.dialog-entity{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:500;color:var(--text1);margin-top:1px}
+.dialog-entity-link{color:var(--purple);font-size:12px}
+.dialog-close{margin-left:auto;width:24px;height:24px;border-radius:var(--r);border:1px solid var(--bd);background:transparent;cursor:pointer;color:var(--text3);font-size:14px;display:flex;align-items:center;justify-content:center}
+.dialog-close:hover{background:var(--bg2);color:var(--text1)}
+.dialog-body-wrap{display:flex;min-height:360px}
+.dialog-main{flex:1;overflow:hidden}
+.dialog-sidebar{width:220px;border-left:1px solid var(--bd);background:var(--bg2);overflow:hidden;flex-shrink:0}
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--bd)}
+.sidebar-tab{flex:1;padding:8px 0;font-size:12px;text-align:center;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.sidebar-tab.active{color:var(--purple);border-bottom-color:var(--purple);font-weight:500}
+.sidebar-content{padding:12px}
+
+.body-widgets{padding:12px}
+.body-widget-card{border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+.bwc-head{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;background:var(--bg2)}
+.bwc-head:hover{background:var(--bg3)}
+.bwc-chevron{font-size:11px;color:var(--text3);transition:transform 0.15s}
+.bwc-chevron.open{transform:rotate(90deg)}
+.bwc-name{font-size:12px;font-weight:500;color:var(--text1);flex:1}
+.bwc-notif-chip{display:inline-flex;align-items:center;gap:3px;background:var(--purple-light);border:1px solid var(--purple-bd);color:var(--purple);border-radius:3px;padding:1px 5px;font-size:10px;font-weight:500}
+.bwc-body{padding:10px 12px;border-top:1px solid var(--bd);display:none}
+.bwc-body.open{display:block}
+.bwc-kv{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid var(--bd);color:var(--text2)}
+.bwc-kv:last-child{border-bottom:none}
+.bwc-kv-k{color:var(--text3)}
+
+.form-section{padding:12px 16px;border-top:1px solid var(--bd)}
+.form-q{font-size:13px;color:var(--text1);margin-bottom:10px;font-weight:500}
+.radio-group{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.radio-item{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 8px;border-radius:var(--r);border:1px solid var(--bd);font-size:13px}
+.radio-item.selected{border-color:var(--purple-bd);background:var(--purple-light)}
+.radio-dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--bd2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.radio-item.selected .radio-dot{border-color:var(--purple)}
+.radio-inner{width:7px;height:7px;border-radius:50%;background:var(--purple);display:none}
+.radio-item.selected .radio-inner{display:block}
+.notes-label{font-size:12px;color:var(--text2);margin-bottom:4px}
+.notes-area{width:100%;border:1px solid var(--bd);border-radius:var(--r);padding:8px 10px;font-size:13px;font-family:inherit;color:var(--text1);background:var(--bg);resize:none;height:64px;outline:none}
+.notes-area:focus{border-color:var(--purple-bd);box-shadow:0 0 0 3px var(--purple-light)}
+
+.dialog-footer{padding:12px 16px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
+.btn{padding:0 14px;height:32px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd2);background:transparent;color:var(--text1);transition:all 0.12s}
+.btn:hover{background:var(--bg2)}
+.btn.primary{background:var(--purple);color:white;border-color:var(--purple)}
+.btn.primary:hover{opacity:0.9}
+.btn.danger{color:var(--red);border-color:var(--red-bd)}
+.btn.danger:hover{background:var(--red-light)}
+
+.status-banner{padding:8px 16px;background:var(--amber-light);border-bottom:1px solid rgba(217,119,6,0.2);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--amber)}
+
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:8px}
+
+.controls-bar{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+  <div class="page-title">Widget Editor + Task Dialog</div>
+  <div class="page-sub">Interactive prototype — design recommendation with rationale. DES-655 / task widget layout &amp; notifications.</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('editor')">Widget editor card</div>
+    <div class="tab" onclick="switchTab('dialog')">Task dialog</div>
+  </div>
+
+  <div class="surface active" id="surface-editor">
+    <div class="annot-bar">
+      <strong>Design call: segment + independent toggle</strong> — widget placement (Sidebar / Body) is mutually exclusive, so a segmented control is the honest model. Notification inclusion is independent — a separate toggle. Dual toggles imply both can be on simultaneously, which is conceptually wrong and would confuse workflow builders.
+      <span class="annot-chip">Unified Mental Model</span><span class="annot-chip green">Correct constraint</span>
+    </div>
+
+    <div style="margin-bottom:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Task Widgets</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:14px">Display contextual information in this task that helps the assignee make confident, informed choices.</div>
+
+    <div class="widget-list">
+      <div class="wcard">
+        <div class="wcard-head">
+          <div class="wcard-drag">
+            <div class="drag-dot-row"><div class="drag-dot"></div><div class="drag-dot"></div></div>
+            <div class="drag-dot-row"><div class="drag-dot"></div><div class="drag-dot"></div></div>
+            <div class="drag-dot-row"><div class="drag-dot"></div><div class="drag-dot"></div></div>
+          </div>
+          <div class="wcard-meta">
+            <div class="wcard-badge">Vertice Widget</div>
+            <div class="wcard-name">Baseline Offer</div>
+            <div class="wcard-desc">Shows the initial offer details including pricing, terms, and payment schedule.</div>
+          </div>
+          <div class="wcard-remove">Remove</div>
+        </div>
+        <div class="wcard-controls">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:var(--text2)">Show in</span>
+            <div class="seg" id="seg-baseline">
+              <button class="seg-btn active" onclick="setSeg('baseline','sidebar',this)">Sidebar</button>
+              <div class="seg-divider"></div>
+              <button class="seg-btn" onclick="setSeg('baseline','body',this)">Body</button>
+            </div>
+          </div>
+          <div class="notif-toggle">
+            <div class="toggle on" id="tog-baseline" onclick="toggleNotif('baseline',this)">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            </div>
+            <span>Send in notification</span>
+            <div class="notif-chip visible" id="chip-baseline">✉ In notification</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wcard">
+        <div class="wcard-head">
+          <div class="wcard-drag">
+            <div class="drag-dot-row"><div class="drag-dot"></div><div class="drag-dot"></div></div>
+            <div class="drag-dot-row"><div class="drag-dot"></div><div class="drag-dot"></div></div>
+            <div class="drag-dot-row"><div class="drag-dot"></div><div class="drag-dot"></div></div>
+          </div>
+          <div class="wcard-meta">
+            <div class="wcard-badge">Custom Widget</div>
+            <div class="wcard-name">Requirements Gathering</div>
+            <div class="wcard-desc"></div>
+          </div>
+          <div class="wcard-remove">Remove</div>
+        </div>
+        <div class="wcard-fields">
+          <div class="field-row">
+            <span>approvedBudget</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="field-type">Money</span>
+              <span style="color:var(--text3);cursor:pointer;font-size:12px">↗</span>
+              <span style="color:var(--text3);cursor:pointer;font-size:12px">🗑</span>
+            </div>
+          </div>
+          <div class="field-row">
+            <span>contractCurrency</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="field-type">Currency</span>
+              <span style="color:var(--text3);cursor:pointer;font-size:12px">↗</span>
+              <span style="color:var(--text3);cursor:pointer;font-size:12px">🗑</span>
+            </div>
+          </div>
+          <div class="field-add">+ Add field</div>
+        </div>
+        <div class="wcard-controls">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px;color:var(--text2)">Show in</span>
+            <div class="seg" id="seg-custom">
+              <button class="seg-btn" onclick="setSeg('custom','sidebar',this)">Sidebar</button>
+              <div class="seg-divider"></div>
+              <button class="seg-btn active" onclick="setSeg('custom','body',this)">Body</button>
+            </div>
+          </div>
+          <div class="notif-toggle">
+            <div class="toggle" id="tog-custom" onclick="toggleNotif('custom',this)">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            </div>
+            <span>Send in notification</span>
+            <div class="notif-chip" id="chip-custom">✉ In notification</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="add-widget">+ Add Widget</div>
+
+    <div class="why-box">
+      <div class="why-head" onclick="toggleWhy(this)">Why this pattern over Martin's variants <span>▾</span></div>
+      <div class="why-body">
+        <div class="why-row">
+          <div class="why-icon good">✓</div>
+          <div class="why-text"><strong>Segmented control for placement</strong> — Sidebar/Body are mutually exclusive. A segmented control communicates this constraint visually without needing documentation. Users cannot accidentally set both.</div>
+        </div>
+        <div class="why-row">
+          <div class="why-icon good">✓</div>
+          <div class="why-text"><strong>Independent toggle for notifications</strong> — Notification inclusion is genuinely independent of placement. Any widget in any position can optionally appear in notifications. The toggle correctly models this.</div>
+        </div>
+        <div class="why-row">
+          <div class="why-icon good">✓</div>
+          <div class="why-text"><strong>Notification chip as status indicator</strong> — Solves the open design question from Martin's spec: the chip confirms notification state at a glance on the widget card without requiring the user to inspect the toggle.</div>
+        </div>
+        <div class="why-row">
+          <div class="why-icon bad">✗</div>
+          <div class="why-text"><strong>Rejected: dual toggles (Martin variant 1)</strong> — "Show in task body" + "Show in sidebar" as two independent toggles implies both can be enabled simultaneously. That's a false model. If both are off, where does the widget go? The constraint is not surfaced.</div>
+        </div>
+        <div class="why-row">
+          <div class="why-icon bad">✗</div>
+          <div class="why-text"><strong>Rejected: dropdown (early mockup)</strong> — A dropdown for two mutually exclusive options adds unnecessary interaction cost. Segmented controls expose both options at once with zero additional clicks.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="surface" id="surface-dialog">
+    <div class="annot-bar">
+      <strong>Design call: body widgets as collapsible sub-zone within Slot 2</strong> — body widgets expand Slot 2 (Body) without introducing a new slot. Collapsed by default so the approval question is always the primary visual focus. Sidebar omitted when all widgets are in body.
+      <span class="annot-chip">Connected Intelligence</span><span class="annot-chip green">Slot model preserved</span>
+    </div>
+
+    <div class="dialog-wrap">
+      <div class="dialog">
+        <div class="dialog-header">
+          <div>
+            <div class="dialog-task-type">Commercial Approval</div>
+            <div class="dialog-entity">
+              <span style="font-size:16px">⚡</span>
+              Microsoft New Purchase
+              <span class="dialog-entity-link">↗</span>
+            </div>
+          </div>
+          <button class="dialog-close">✕</button>
+        </div>
+
+        <div class="status-banner">
+          <span style="font-size:14px">⏳</span>
+          <span>Awaiting your decision · Due <strong>21 May 2025</strong></span>
+          <span style="margin-left:auto;opacity:0.7">Assigned to you</span>
+        </div>
+
+        <div class="dialog-body-wrap">
+          <div class="dialog-main">
+            <div class="body-widgets">
+              <div class="section-label">Context</div>
+              <div class="body-widget-card" id="bwc-baseline">
+                <div class="bwc-head" onclick="toggleBwc('baseline',this)">
+                  <span class="bwc-chevron" id="chev-baseline">▶</span>
+                  <span class="bwc-name">Baseline Offer</span>
+                  <span class="bwc-notif-chip">✉ In notification</span>
+                </div>
+                <div class="bwc-body" id="bwc-body-baseline">
+                  <div class="bwc-kv"><span class="bwc-kv-k">Baseline Price</span><span>$24,000 / yr</span></div>
+                  <div class="bwc-kv"><span class="bwc-kv-k">Discount</span><span>15%</span></div>
+                  <div class="bwc-kv"><span class="bwc-kv-k">Payment Terms</span><span>Annual</span></div>
+                  <div class="bwc-kv"><span class="bwc-kv-k">Seats</span><span>50</span></div>
+                </div>
+              </div>
+              <div class="body-widget-card" id="bwc-requirements" style="display:none">
+                <div class="bwc-head" onclick="toggleBwc('requirements',this)">
+                  <span class="bwc-chevron" id="chev-requirements">▶</span>
+                  <span class="bwc-name">Requirements Gathering</span>
+                </div>
+                <div class="bwc-body" id="bwc-body-requirements">
+                  <div class="bwc-kv"><span class="bwc-kv-k">Approved Budget</span><span>$48,000</span></div>
+                  <div class="bwc-kv"><span class="bwc-kv-k">Contract Currency</span><span>USD</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-q">What is the final decision for 'Commercial Approval'?</div>
+              <div class="radio-group">
+                <div class="radio-item selected" onclick="selectRadio(this)">
+                  <div class="radio-dot"><div class="radio-inner"></div></div>
+                  Approve
+                </div>
+                <div class="radio-item" onclick="selectRadio(this)">
+                  <div class="radio-dot"><div class="radio-inner"></div></div>
+                  Decline
+                </div>
+              </div>
+              <div class="notes-label">Additional notes (optional)</div>
+              <textarea class="notes-area" placeholder="Add context for your decision..."></textarea>
+            </div>
+          </div>
+
+          <div class="dialog-sidebar" id="dialog-sidebar">
+            <div class="sidebar-tabs">
+              <div class="sidebar-tab active">Details</div>
+              <div class="sidebar-tab">Comments</div>
+            </div>
+            <div class="sidebar-content">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:8px">Request Overview</div>
+              <div class="bwc-kv"><span class="bwc-kv-k">Vendor</span><span>Microsoft</span></div>
+              <div class="bwc-kv"><span class="bwc-kv-k">Category</span><span>SaaS</span></div>
+              <div class="bwc-kv"><span class="bwc-kv-k">Total Value</span><span style="font-weight:500">$48,000</span></div>
+              <div class="bwc-kv"><span class="bwc-kv-k">Requested by</span><span>J. Smith</span></div>
+              <div class="bwc-kv" style="border-bottom:none"><span class="bwc-kv-k">Request type</span><span>New Purchase</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <button class="btn danger">Decline</button>
+          <button class="btn primary">Submit Decision</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <button class="btn" onclick="toggleBodyWidget()">Toggle custom widget in body</button>
+      <button class="btn" onclick="toggleSidebar()">Toggle sidebar</button>
+    </div>
+
+    <div class="why-box">
+      <div class="why-head" onclick="toggleWhy(this)">Design decisions for the task dialog <span>▾</span></div>
+      <div class="why-body">
+        <div class="why-row">
+          <div class="why-icon good">✓</div>
+          <div class="why-text"><strong>Body widgets in Slot 2, not a new slot</strong> — They live above the form question as a collapsible "Context" section. No new shell slot needed. This preserves the 5-slot architecture and avoids engineering new layout modes.</div>
+        </div>
+        <div class="why-row">
+          <div class="why-icon good">✓</div>
+          <div class="why-text"><strong>Collapsed by default</strong> — The approval question is always the primary visual. Context is available on demand. Power users who need the data expand; casual approvers aren't distracted by it.</div>
+        </div>
+        <div class="why-row">
+          <div class="why-icon good">✓</div>
+          <div class="why-text"><strong>Notification chip on collapsed card header</strong> — Resolves Martin's open question. Workflow builders can see at-a-glance which widgets are included in notifications without opening each card.</div>
+        </div>
+        <div class="why-row">
+          <div class="why-icon good">✓</div>
+          <div class="why-text"><strong>Sidebar omits tab when empty</strong> — Martin's spec says omit the sidebar tab if no widgets remain for it. Use the toggle button to see this state — sidebar hides cleanly and the main content expands.</div>
+        </div>
+        <div class="why-row">
+          <div class="why-icon bad">✗</div>
+          <div class="why-text"><strong>Rejected: widget above the question (Martin V1)</strong> — Puts context before the question in reading order, but the question is the primary job. Reversed hierarchy increases time-to-action for the 98% Ratification archetype who just need to approve.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',(i===0&&id==='editor')||(i===1&&id==='dialog'))
+  });
+  document.querySelectorAll('.surface').forEach(s=>{
+    s.classList.toggle('active',s.id==='surface-'+id)
+  })
+}
+function setSeg(id,val,btn){
+  const seg=document.getElementById('seg-'+id);
+  seg.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='custom'){
+    document.getElementById('bwc-requirements').style.display=(val==='body'?'':'none');
+  }
+}
+function toggleNotif(id,el){
+  el.classList.toggle('on');
+  const chip=document.getElementById('chip-'+id);
+  chip.classList.toggle('visible',el.classList.contains('on'));
+}
+function toggleBwc(id){
+  const body=document.getElementById('bwc-body-'+id);
+  const chev=document.getElementById('chev-'+id);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+function selectRadio(el){
+  el.closest('.radio-group').querySelectorAll('.radio-item').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function toggleBodyWidget(){
+  const el=document.getElementById('bwc-requirements');
+  el.style.display=(el.style.display==='none'?'':'none');
+  const seg=document.getElementById('seg-custom');
+  if(el.style.display===''){
+    seg.querySelectorAll('.seg-btn').forEach((b,i)=>b.classList.toggle('active',i===1));
+  } else {
+    seg.querySelectorAll('.seg-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  }
+}
+function toggleSidebar(){
+  const sidebar=document.getElementById('dialog-sidebar');
+  sidebar.style.display=(sidebar.style.display==='none'?'':'none');
+}
+function toggleWhy(headEl){
+  headEl.nextElementSibling.classList.toggle('open');
+}
+</script>
+</body>
+</html>
